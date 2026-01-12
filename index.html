@@ -7,117 +7,158 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0b141e; color: white; }
-        .dark-bg { background-color: #0b141e; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .dark-bg { background-color: #0b141e; } /* Fondo exacto de la imagen */
         .card-glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
         .gold-text { color: #d4af37; }
         .gold-bg { background: #d4af37; }
         .animate-up { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
         input::placeholder { color: #4b5563; }
     </style>
 </head>
-<body class="pb-24 overflow-x-hidden">
+<body class="dark-bg text-white pb-24 overflow-x-hidden">
     <div id="app"></div>
 
     <nav class="fixed bottom-0 left-0 right-0 dark-bg border-t border-white/5 px-10 py-5 flex justify-between items-center z-50 shadow-2xl">
-        <button onclick="cambiarVista('home')" class="flex flex-col items-center gap-1 opacity-50">
-            <span class="text-xl">🏠</span>
+        <button onclick="cambiarVista('home')" class="flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition">
+            <span class="text-xl">⚒️</span>
             <span class="text-[9px] font-bold uppercase tracking-widest">Inicio</span>
         </button>
-        <button onclick="cambiarVista('home')" class="relative -top-4">
-             <div class="w-14 h-14 rounded-full border-2 border-white/10 flex items-center justify-center dark-bg shadow-xl overflow-hidden bg-slate-800">
-                <img id="nav-logo" src="" class="w-full h-full object-cover hidden">
-                <span id="nav-placeholder" class="gold-text font-bold text-xl">F</span>
+        <button onclick="cambiarVista('metas')" class="relative -top-4">
+             <div class="w-14 h-14 rounded-full border-2 border-white/10 flex items-center justify-center dark-bg shadow-xl">
+                <div id="nav-logo" class="w-10 h-10 rounded-full flex items-center justify-center gold-text font-bold border border-gold-text/30">F</div>
              </div>
         </button>
-        <button onclick="cambiarVista('config')" class="flex flex-col items-center gap-1 opacity-50">
-            <span class="text-xl">⚙️</span>
+        <button onclick="cambiarVista('config')" class="flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition">
+            <span class="text-xl">📋</span>
             <span class="text-[9px] font-bold uppercase tracking-widest">Ajustes</span>
         </button>
     </nav>
 
     <script>
-        // TU LOGO ALMACENADO (SANEADO)
-        const LOGO_DATA = "data:image/jpeg;base64,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";
+        // --- PEGA AQUÍ TU LOGO EN BASE64 ---
+        const LOGO_BASE64 = ""; // Pega aquí el código que copies de la web de Base64
 
-        // CONFIGURACIÓN DE LA APP
         let config = JSON.parse(localStorage.getItem('f_dark_config')) || {
-            nombre: "Usuario Élite",
+            nombre: "Usuario",
             metodos: ['AMEX', 'BBVA', 'EFECTIVO'],
-            categorias: ['Comida', 'Super', 'Gym', 'Pasto'],
+            categorias: ['Comida', 'Super', 'Gym', 'Varios'],
+            conceptosIngreso: ['Nomina', 'Bono'],
             metas: [{ nombre: "Viaje a Tokyo", monto: 50000, fecha: "2026-12-31" }]
         };
         let movimientos = JSON.parse(localStorage.getItem('f_dark_movs')) || [];
         let vistaActual = 'home';
+        let tipoActual = 'gasto';
 
         function render() {
             const container = document.getElementById('app');
             container.innerHTML = '';
-            
-            if (vistaActual === 'config') renderConfig(container);
+            if (vistaActual === 'metas') renderMetas(container);
+            else if (vistaActual === 'config') renderConfig(container);
             else renderHome(container);
-
-            // CARGAR LOGO SIN BLOQUEAR
-            setTimeout(() => {
-                const navImg = document.getElementById('nav-logo');
-                const navPlaceholder = document.getElementById('nav-placeholder');
-                const headerImg = document.getElementById('header-logo-img');
-                const headerPlaceholder = document.getElementById('header-placeholder');
-
-                if (LOGO_DATA && LOGO_DATA.length > 100) {
-                    if (navImg) { navImg.src = LOGO_DATA; navImg.classList.remove('hidden'); navPlaceholder.classList.add('hidden'); }
-                    if (headerImg) { headerImg.src = LOGO_DATA; headerImg.classList.remove('hidden'); headerPlaceholder.classList.add('hidden'); }
-                }
-            }, 50);
+            
+            // Inyectar logo si existe
+            if(LOGO_BASE64) {
+                const logos = document.querySelectorAll('#nav-logo, #header-logo');
+                logos.forEach(el => el.innerHTML = `<img src="${LOGO_BASE64}" class="w-full h-full rounded-full object-cover">`);
+            }
         }
 
         function renderHome(c) {
-            const total = movimientos.reduce((acc, m) => m.tipo === 'ingreso' ? acc + parseFloat(m.monto) : acc - parseFloat(m.monto), 0);
-            
+            const stats = calcularStats();
             c.innerHTML = `
                 <div class="pt-12 px-8 mb-8 animate-up">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center bg-slate-800 overflow-hidden">
-                            <img id="header-logo-img" src="" class="w-full h-full object-cover hidden">
-                            <span id="header-placeholder" class="gold-text font-bold text-xl">F</span>
-                        </div>
+                        <div id="header-logo" class="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center bg-slate-800 text-xl gold-text font-bold">F</div>
                         <h2 class="text-xl font-medium text-slate-300">Hola, ${config.nombre}</h2>
                     </div>
                 </div>
 
-                <div class="px-8 mb-8 animate-up">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Balance General</h3>
-                    <div class="bg-white p-6 rounded-2xl shadow-xl">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Disponible</p>
-                        <p class="text-4xl font-extrabold text-slate-900">$${total.toLocaleString()}</p>
+                <div class="px-8 mb-8 animate-up" style="animation-delay: 0.1s">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Expantos por accunte</h3>
+                    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                        ${config.metodos.map(m => `
+                            <div class="min-w-[150px] bg-white p-5 rounded-xl flex flex-col justify-between h-28 shadow-lg">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-[8px] text-white font-bold">${m[0]}</div>
+                                    <span class="text-[10px] font-extrabold text-slate-800 uppercase">${m}</span>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] text-slate-400 font-bold mb-1 italic">Balance Actual</p>
+                                    <p class="text-xl font-extrabold text-slate-900">$${(stats.porCuenta[m] || 0).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
 
-                <div class="px-8 animate-up">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Nuevo Gasto</h3>
+                <div class="px-8 mb-10 animate-up" style="animation-delay: 0.2s">
+                    ${config.metas.length > 0 ? `
+                        <div class="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-xl">
+                            <div class="w-16 h-16 rounded-full border border-slate-100 flex items-center justify-center text-2xl">🇯🇵</div>
+                            <div class="flex-1">
+                                <h4 class="text-slate-900 font-extrabold text-lg">${config.metas[0].nombre}</h4>
+                                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                                    <div class="h-full gold-bg" style="width: 45%"></div>
+                                </div>
+                                <div class="flex justify-between mt-2 text-[9px] font-bold text-slate-400 uppercase">
+                                    <span>Progreso</span>
+                                    <span>$${parseFloat(config.metas[0].monto).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="px-8 animate-up" style="animation-delay: 0.3s">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Nuevo Movimiento</h3>
                     <div class="card-glass rounded-[35px] p-8 space-y-6 shadow-2xl">
-                        <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="bg-transparent text-5xl font-extrabold outline-none w-full text-center">
-                        <select id="metodo" class="w-full bg-transparent border-b border-white/5 py-3 text-sm outline-none">
-                            ${config.metodos.map(m => `<option class="bg-slate-900" value="${m}">${m}</option>`).join('')}
-                        </select>
-                        <button onclick="registrar()" class="w-full gold-bg text-slate-900 py-4 rounded-xl font-extrabold uppercase text-xs">Confirmar</button>
+                        <div class="flex border-b border-white/5 pb-4">
+                             <input type="number" id="monto" inputmode="decimal" placeholder="Monto" class="bg-transparent text-4xl font-extrabold outline-none w-full text-center placeholder:text-slate-700">
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <select id="cat" class="bg-transparent border-b border-white/5 py-3 text-sm outline-none text-slate-300">
+                                ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option class="bg-slate-900" value="${c}">${c}</option>`).join('')}
+                            </select>
+                            <select id="metodo" class="bg-transparent border-b border-white/5 py-3 text-sm outline-none text-slate-300">
+                                ${config.metodos.map(m => `<option class="bg-slate-900" value="${m}">${m}</option>`).join('')}
+                            </select>
+                            <input type="text" id="desc" placeholder="Descripción" class="bg-transparent border-b border-white/5 py-3 text-sm outline-none text-slate-300">
+                        </div>
+                        <button onclick="registrar()" class="w-full gold-bg text-slate-900 py-4 rounded-xl font-extrabold uppercase tracking-widest text-xs active:scale-95 transition">Registrar Transacción</button>
                     </div>
                 </div>
             `;
         }
 
+        // --- LÓGICA REUTILIZADA ---
+        function calcularStats() {
+            let total = 0; let porCuenta = {};
+            movimientos.forEach(m => {
+                const monto = parseFloat(m.monto);
+                if (m.tipo === 'ingreso') total += monto; else total -= monto;
+                if (!porCuenta[m.metodo]) porCuenta[m.metodo] = 0;
+                if (m.tipo === 'gasto') porCuenta[m.metodo] += monto;
+            });
+            return { totalBalance: total, porCuenta };
+        }
+
         function registrar() {
             const m = document.getElementById('monto').value;
             if(!m) return;
-            movimientos.unshift({ monto: m, tipo: 'gasto', metodo: document.getElementById('metodo').value, fecha: new Date().toISOString() });
-            localStorage.setItem('f_dark_movs', JSON.stringify(movimientos));
-            render();
+            movimientos.unshift({ monto: m, tipo: tipoActual, desc: document.getElementById('desc').value, cat: document.getElementById('cat').value, metodo: document.getElementById('metodo').value, fecha: new Date().toISOString() });
+            save(); render();
         }
 
+        function save() { localStorage.setItem('f_dark_config', JSON.stringify(config)); localStorage.setItem('f_dark_movs', JSON.stringify(movimientos)); }
         function cambiarVista(v) { vistaActual = v; render(); }
-        function renderConfig(c) { c.innerHTML = `<div class="p-10 text-center animate-up"><h2 class="text-2xl font-bold mb-10">Ajustes</h2><button onclick="localStorage.clear(); location.reload();" class="text-red-500 font-bold uppercase">Resetear Todo</button></div>`; }
+        function renderConfig(c) { 
+            c.innerHTML = `<div class="p-10 text-center animate-up"><h2 class="text-2xl font-bold mb-10">Ajustes</h2><button onclick="localStorage.clear(); location.reload();" class="text-red-500 font-bold uppercase">Resetear App</button></div>`;
+        }
+        function renderMetas(c) {
+             c.innerHTML = `<div class="p-10 text-center animate-up"><h2 class="text-2xl font-bold mb-10">Mis Objetivos</h2><p class="text-slate-400">Panel de metas próximamente...</p></div>`;
+        }
 
         render();
     </script>
