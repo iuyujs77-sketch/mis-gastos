@@ -7,8 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
         .animate-slide { animation: slideUp 0.4s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -18,52 +17,68 @@
     <div id="app"></div>
 
     <script>
-        // --- ESTADO ---
+        // --- ESTADO INICIAL ---
         let config = JSON.parse(localStorage.getItem('elite_config')) || {
             nombre: "",
             metodos: ['Amex', 'Banamex Crédito', 'BBVA Débito', 'Efectivo'],
-            categorias: ['Comida', 'Súper', 'Gasolina', 'Oxxo', 'Servicios', 'Mantenimiento', 'Salud'],
+            categorias: ['Comida', 'Súper', 'Gasolina', 'Oxxo', 'Servicios', 'Mantenimiento', 'Salud', 'Ropa'],
             conceptosIngreso: ['Nómina', 'Bono', 'Aguinaldo', 'Vales']
         };
         let movimientos = JSON.parse(localStorage.getItem('elite_movs')) || [];
-        let vista = config.nombre ? 'home' : 'onboarding';
+        let vistaActual = config.nombre ? 'home' : 'onboarding';
         let tipoActual = 'gasto';
 
         const ejemplos = {
             'Comida': 'Ej: Restaurante La Libertad',
-            'Súper': 'Ej: Compras del mes en Costco',
+            'Súper': 'Ej: Compras en Costco',
             'Gasolina': 'Ej: Carga tanque lleno',
             'Oxxo': 'Ej: Café y galletas',
-            'Mantenimiento': 'Ej: Servicio Pasto Zoysia',
-            'Nómina': 'Ej: Pago quincena 1',
-            'Bono': 'Ej: Bono por desempeño',
-            'Vales': 'Ej: Depósito tarjeta vales'
+            'Mantenimiento': 'Ej: Pago Pasto Zoysia',
+            'Nómina': 'Ej: Depósito quincena',
+            'Bono': 'Ej: Bono resultados',
+            'Vales': 'Ej: Despensa mensual'
         };
 
         function render() {
             const container = document.getElementById('app');
-            if (vista === 'onboarding') renderOnboarding(container);
-            else if (vista === 'config') renderConfig(container);
-            else renderHome(container);
+            if (vistaActual === 'onboarding') {
+                renderOnboarding(container);
+            } else if (vistaActual === 'config') {
+                renderConfig(container);
+            } else {
+                renderHome(container);
+            }
         }
 
-        // --- ONBOARDING (NOMBRE) ---
+        // --- PANTALLA INICIAL (ONBOARDING) ---
         function renderOnboarding(c) {
             c.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center p-6 animate-slide">
-                    <div class="w-full max-w-md bg-white p-8 rounded-[40px] shadow-2xl text-center">
-                        <div class="text-5xl mb-6">💰</div>
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">¡Bienvenido!</h1>
-                        <p class="text-slate-400 mb-8">Para empezar, ¿cómo te llamas?</p>
-                        <input type="text" id="user_name" placeholder="Tu nombre" class="w-full p-4 bg-slate-100 rounded-2xl mb-6 text-center text-lg font-bold outline-none focus:ring-2 ring-blue-500">
-                        <button onclick="saveName()" class="w-full gradient-bg text-white py-4 rounded-2xl font-extrabold shadow-lg">Continuar</button>
+                    <div class="w-full max-w-md bg-white p-8 rounded-[40px] shadow-2xl text-center border border-slate-100">
+                        <div class="text-6xl mb-6">💎</div>
+                        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Bienvenido</h1>
+                        <p class="text-slate-400 mb-8">Personaliza tu experiencia,<br>¿cómo te llamas?</p>
+                        <input type="text" id="user_name" placeholder="Tu nombre" 
+                            class="w-full p-5 bg-slate-50 rounded-2xl mb-6 text-center text-xl font-bold outline-none focus:ring-4 ring-blue-50 border-none">
+                        <button onclick="saveName()" 
+                            class="w-full gradient-bg text-white py-5 rounded-2xl font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest">
+                            Comenzar
+                        </button>
                     </div>
                 </div>`;
         }
 
         function saveName() {
-            const n = document.getElementById('user_name').value.trim();
-            if(n) { config.nombre = n; vista = 'home'; saveConfig(); }
+            const input = document.getElementById('user_name');
+            const nombre = input.value.trim();
+            if (nombre) {
+                config.nombre = nombre;
+                localStorage.setItem('elite_config', JSON.stringify(config));
+                vistaActual = 'home';
+                render();
+            } else {
+                input.classList.add('ring-red-200', 'ring-2');
+            }
         }
 
         // --- VISTA HOME ---
@@ -71,143 +86,198 @@
             const total = movimientos.reduce((acc, m) => m.tipo === 'ingreso' ? acc + parseFloat(m.monto) : acc - parseFloat(m.monto), 0);
             
             c.innerHTML = `
-                <div class="gradient-bg pt-12 pb-20 px-8 rounded-b-[50px] text-white shadow-2xl relative">
+                <div class="gradient-bg pt-14 pb-24 px-8 rounded-b-[50px] text-white shadow-2xl relative">
                     <div class="flex justify-between items-center mb-6">
                         <div>
-                            <p class="opacity-70 text-sm">Hola, ${config.nombre} 👋</p>
+                            <p class="opacity-70 text-sm font-semibold">Hola, ${config.nombre} 👋</p>
                             <h2 class="text-4xl font-extrabold tracking-tight">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</h2>
                         </div>
-                        <button onclick="goVista('config')" class="bg-white/20 p-3 rounded-2xl backdrop-blur-md">⚙️</button>
+                        <button onclick="cambiarVista('config')" class="bg-white/20 p-3 rounded-2xl backdrop-blur-md active:scale-90 transition-all">⚙️</button>
                     </div>
                 </div>
 
-                <div class="max-w-md mx-auto px-5 -mt-12 animate-slide">
-                    <div class="bg-white p-6 rounded-[35px] shadow-xl border border-white/50 space-y-5">
+                <div class="max-w-md mx-auto px-5 -mt-16 animate-slide">
+                    <div class="bg-white p-7 rounded-[40px] shadow-2xl border border-white space-y-6">
                         <div class="flex bg-slate-100 rounded-2xl p-1.5">
-                            <button id="t-gasto" onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-white shadow-md text-red-600' : 'text-slate-400'} uppercase">Gasto</button>
-                            <button id="t-ingreso" onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-white shadow-md text-green-600' : 'text-slate-400'} uppercase">Ingreso</button>
+                            <button onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-white shadow-md text-red-600' : 'text-slate-400'} uppercase">Gasto</button>
+                            <button onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-white shadow-md text-green-600' : 'text-slate-400'} uppercase">Ingreso</button>
                         </div>
 
-                        <div class="text-center py-4">
-                            <span class="text-slate-300 text-xl font-bold mr-1">$</span>
-                            <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="text-5xl font-extrabold w-3/4 outline-none text-slate-800 placeholder:text-slate-100">
+                        <div class="text-center">
+                            <input type="number" id="monto" inputmode="decimal" placeholder="0.00" 
+                                class="text-6xl font-extrabold w-full text-center outline-none text-slate-800 placeholder:text-slate-100 bg-transparent">
                         </div>
 
                         <div class="space-y-4">
-                            <input type="text" id="desc" placeholder="${ejemplos[config.categorias[0]] || 'Descripción...'}" class="w-full p-4 bg-slate-50 rounded-2xl text-sm border-none outline-none focus:ring-2 ring-blue-100 transition-all">
+                            <input type="text" id="desc" placeholder="${ejemplos[config.categorias[0]] || 'Descripción...'}" 
+                                class="w-full p-4 bg-slate-50 rounded-2xl text-sm border-none outline-none focus:ring-2 ring-blue-100 font-medium">
                             
                             <div class="grid grid-cols-2 gap-3">
-                                <select id="cat" onchange="updatePlaceholder()" class="p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none border-none">
-                                    ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
-                                </select>
-                                <select id="metodo" class="p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none border-none">
-                                    ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
-                                </select>
+                                <div class="space-y-1">
+                                    <label class="text-[9px] font-extrabold text-slate-400 uppercase ml-2">Categoría</label>
+                                    <select id="cat" onchange="updatePlaceholder()" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none appearance-none">
+                                        ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[9px] font-extrabold text-slate-400 uppercase ml-2">Cuenta</label>
+                                    <select id="metodo" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none appearance-none">
+                                        ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="bg-slate-50 rounded-2xl p-4">
-                                <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1">Fecha y Hora</label>
-                                <input type="datetime-local" id="fecha" class="w-full bg-transparent text-xs font-bold outline-none">
+                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase mb-1">Fecha y Hora Registro</label>
+                                <input type="datetime-local" id="fecha" class="w-full bg-transparent text-xs font-bold outline-none text-slate-700">
                             </div>
                         </div>
 
-                        <button onclick="registrar()" class="w-full gradient-bg text-white py-5 rounded-[25px] font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Registrar ${tipoActual}</button>
+                        <button onclick="registrar()" class="w-full gradient-bg text-white py-5 rounded-[25px] font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">
+                            Registrar ${tipoActual}
+                        </button>
                     </div>
 
-                    <div class="mt-10 mb-5 flex justify-between items-center px-2">
-                        <h3 class="font-extrabold text-slate-800 text-lg">Actividad</h3>
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${movimientos.length} regs</span>
+                    <div class="mt-12 mb-6 flex justify-between items-center px-2">
+                        <h3 class="font-extrabold text-slate-800 text-xl">Actividad</h3>
+                        <span class="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full uppercase">${movimientos.length} movimientos</span>
                     </div>
 
                     <div class="space-y-4">
+                        ${movimientos.length === 0 ? '<p class="text-center text-slate-300 py-10 font-medium">No hay registros aún</p>' : ''}
                         ${movimientos.map((m, i) => `
-                            <div class="bg-white p-5 rounded-[25px] flex justify-between items-center shadow-sm border border-slate-50">
+                            <div class="bg-white p-5 rounded-[30px] flex justify-between items-center shadow-sm border border-slate-50 animate-slide">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${m.tipo === 'gasto' ? 'bg-red-50' : 'bg-green-50'}">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${m.tipo === 'gasto' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}">
                                         ${m.tipo === 'gasto' ? '📉' : '📈'}
                                     </div>
                                     <div>
                                         <p class="font-extrabold text-sm text-slate-800">${m.desc || m.cat}</p>
-                                        <p class="text-[10px] text-slate-400 font-semibold uppercase">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
                                     <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-500'}">
                                         ${m.tipo === 'gasto' ? '-' : '+'}$${parseFloat(m.monto).toLocaleString()}
                                     </p>
-                                    <button onclick="borrar(${i})" class="text-[10px] font-bold text-slate-200 hover:text-red-300">Quitar</button>
+                                    <button onclick="borrar(${i})" class="text-[10px] font-bold text-slate-200 hover:text-red-300 transition-colors uppercase">Borrar</button>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `;
-            document.getElementById('fecha').value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            // Set default date
+            const inputFecha = document.getElementById('fecha');
+            if(inputFecha) inputFecha.value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         }
 
-        // --- VISTA CONFIG (Ajustes) ---
+        // --- VISTA CONFIG ---
         function renderConfig(c) {
             c.innerHTML = `
                 <div class="p-8 max-w-md mx-auto space-y-8 animate-slide">
-                    <div class="flex items-center gap-4">
-                        <button onclick="goVista('home')" class="bg-white p-3 rounded-2xl shadow-sm text-xl">⬅️</button>
+                    <div class="flex items-center justify-between">
+                        <button onclick="cambiarVista('home')" class="bg-white p-4 rounded-2xl shadow-sm text-xl active:scale-90 transition-all">⬅️</button>
                         <h1 class="text-2xl font-extrabold">Ajustes</h1>
+                        <div class="w-12"></div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-[30px] shadow-sm border space-y-6">
+                    <div class="bg-white p-8 rounded-[40px] shadow-sm border space-y-8">
                         <div>
-                            <label class="text-xs font-extrabold text-slate-400 uppercase">Tu Nombre</label>
-                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-2 p-3 bg-slate-50 rounded-xl font-bold outline-none focus:ring-2 ring-blue-500">
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Nombre de Usuario</label>
+                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" 
+                                class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500 border-none">
                         </div>
-                        <hr>
+                        
                         <div>
-                            <label class="text-xs font-extrabold text-slate-400 uppercase">Tarjetas / Cuentas</label>
-                            <div class="flex gap-2 mt-2 mb-3">
-                                <input type="text" id="newCard" placeholder="Nueva tarjeta..." class="flex-1 p-3 bg-slate-50 rounded-xl text-sm outline-none">
-                                <button onclick="addList('metodos', 'newCard')" class="gradient-bg text-white px-5 rounded-xl font-bold">+</button>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Mis Tarjetas / Cuentas</label>
+                            <div class="flex gap-2 mt-3 mb-4">
+                                <input type="text" id="newCard" placeholder="Nueva..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-sm outline-none font-bold">
+                                <button onclick="addItem('metodos', 'newCard')" class="gradient-bg text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                ${config.metodos.map((m, i) => `<span class="bg-slate-100 text-[10px] font-bold px-3 py-2 rounded-lg flex items-center gap-2">${m} <button onclick="removeList('metodos', ${i})" class="text-red-400">×</button></span>`).join('')}
+                                ${config.metodos.map((m, i) => `
+                                    <span class="bg-slate-100 text-[10px] font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                                        ${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400 ml-1">×</button>
+                                    </span>
+                                `).join('')}
                             </div>
                         </div>
                     </div>
-                    <button onclick="resetApp()" class="w-full text-slate-400 text-xs font-bold">Borrar todos los datos</button>
+
+                    <button onclick="resetApp()" class="w-full text-slate-300 text-[10px] font-extrabold uppercase tracking-widest py-10">
+                        Restablecer Aplicación
+                    </button>
                 </div>`;
         }
 
-        // --- FUNCIONES LÓGICA ---
-        function setTipo(t) { tipoActual = t; render(); updatePlaceholder(); }
+        // --- LÓGICA DE CONTROL ---
+        function setTipo(t) { tipoActual = t; render(); }
         
         function updatePlaceholder() {
             const cat = document.getElementById('cat').value;
             const inputDesc = document.getElementById('desc');
-            if(inputDesc) inputDesc.placeholder = ejemplos[cat] || (tipoActual === 'gasto' ? 'Ej: Compra en...' : 'Ej: Ingreso por...');
+            if(inputDesc) {
+                inputDesc.placeholder = ejemplos[cat] || (tipoActual === 'gasto' ? 'En qué gastaste...' : 'Concepto de ingreso...');
+            }
         }
 
         function registrar() {
             const m = document.getElementById('monto').value;
             if(!m || m <= 0) return;
-            movimientos.unshift({
-                monto: m, tipo: tipoActual, desc: document.getElementById('desc').value,
-                cat: document.getElementById('cat').value, metodo: document.getElementById('metodo').value,
+            const mov = {
+                monto: m,
+                tipo: tipoActual,
+                desc: document.getElementById('desc').value,
+                cat: document.getElementById('cat').value,
+                metodo: document.getElementById('metodo').value,
                 fecha: document.getElementById('fecha').value
-            });
+            };
+            movimientos.unshift(mov);
             localStorage.setItem('elite_movs', JSON.stringify(movimientos));
             render();
         }
 
-        function addList(key, id) {
+        function addItem(key, id) {
             const val = document.getElementById(id).value.trim();
-            if(val) { config[key].push(val); saveConfig(); render(); }
+            if(val) {
+                config[key].push(val);
+                localStorage.setItem('elite_config', JSON.stringify(config));
+                render();
+            }
         }
 
-        function removeList(key, i) { config[key].splice(i, 1); saveConfig(); render(); }
-        function updateNombre(v) { config.nombre = v; saveConfig(); }
-        function goVista(v) { vista = v; render(); }
-        function saveConfig() { localStorage.setItem('elite_config', JSON.stringify(config)); }
-        function borrar(i) { if(confirm('¿Borrar?')) { movimientos.splice(i,1); localStorage.setItem('elite_movs', JSON.stringify(movimientos)); render(); } }
-        function resetApp() { if(confirm('¡Se borrará todo!')) { localStorage.clear(); location.reload(); } }
+        function removeItem(key, i) {
+            config[key].splice(i, 1);
+            localStorage.setItem('elite_config', JSON.stringify(config));
+            render();
+        }
 
+        function updateNombre(v) {
+            if(v.trim()) {
+                config.nombre = v.trim();
+                localStorage.setItem('elite_config', JSON.stringify(config));
+            }
+        }
+
+        function cambiarVista(v) { vistaActual = v; render(); }
+        
+        function borrar(i) {
+            if(confirm('¿Eliminar este registro?')) {
+                movimientos.splice(i, 1);
+                localStorage.setItem('elite_movs', JSON.stringify(movimientos));
+                render();
+            }
+        }
+
+        function resetApp() {
+            if(confirm('¿ESTÁS SEGURO? Se borrarán todos tus gastos y configuración.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Iniciar la App
         render();
     </script>
 </body>
