@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control de Gastos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 pb-20">
+    <div class="bg-blue-600 p-8 rounded-b-[40px] text-white shadow-lg text-center">
+        <p class="text-blue-100 text-sm">Balance Disponible</p>
+        <h2 id="balance" class="text-4xl font-bold">$0.00</h2>
+    </div>
+
+    <div class="max-w-md mx-auto px-5 -mt-6">
+        <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
+            <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="w-full text-5xl font-bold text-center mb-6 focus:outline-none text-slate-800">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <select id="metodo" class="p-3 bg-slate-50 rounded-2xl text-sm outline-none border-none">
+                    <option value="Amex">💳 Amex</option>
+                    <option value="Efectivo">💵 Efectivo</option>
+                    <option value="Débito">🏦 Débito</option>
+                </select>
+                <select id="categoria" class="p-3 bg-slate-50 rounded-2xl text-sm outline-none border-none">
+                    <option value="Comida">🍟 Comida</option>
+                    <option value="Pasto">🌿 Hogar/Pasto</option>
+                    <option value="Servicios">⚡ Servicios</option>
+                    <option value="Otros">📦 Otros</option>
+                </select>
+            </div>
+            <button onclick="agregarGasto()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">Registrar Gasto</button>
+        </div>
+
+        <h3 class="font-bold text-slate-800 mt-8 mb-4 ml-2">Movimientos Recientes</h3>
+        <div id="lista" class="space-y-3"></div>
+    </div>
+
+    <script>
+        let gastos = JSON.parse(localStorage.getItem('gastos_app')) || [];
+        function actualizarUI() {
+            const lista = document.getElementById('lista');
+            const balanceEl = document.getElementById('balance');
+            lista.innerHTML = '';
+            let total = 0;
+            gastos.forEach((g, index) => {
+                total -= parseFloat(g.monto);
+                lista.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-50 p-2 rounded-xl text-lg">${g.metodo === 'Amex' ? '💳' : '💵'}</div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-800">${g.categoria}</p>
+                                <p class="text-[10px] text-slate-400 font-medium">${g.metodo}</p>
+                            </div>
+                        </div>
+                        <span class="font-bold text-red-500">-$${parseFloat(g.monto).toLocaleString()}</span>
+                    </div>`;
+            });
+            balanceEl.innerText = `$${(total * -1).toLocaleString()}`;
+            localStorage.setItem('gastos_app', JSON.stringify(gastos));
+        }
+        function agregarGasto() {
+            const monto = document.getElementById('monto').value;
+            const metodo = document.getElementById('metodo').value;
+            const categoria = document.getElementById('categoria').value;
+            if(!monto || monto <= 0) return;
+            gastos.unshift({ monto, metodo, categoria, fecha: new Date() });
+            document.getElementById('monto').value = '';
+            actualizarUI();
+        }
+        actualizarUI();
+    </script>
+</body>
+</html>
