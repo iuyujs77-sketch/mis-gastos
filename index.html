@@ -3,73 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Control de Gastos</title>
+    <title>Finance Pro v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-50 pb-20">
-    <div class="bg-blue-600 p-8 rounded-b-[40px] text-white shadow-lg text-center">
-        <p class="text-blue-100 text-sm">Balance Disponible</p>
-        <h2 id="balance" class="text-4xl font-bold">$0.00</h2>
-    </div>
-
-    <div class="max-w-md mx-auto px-5 -mt-6">
-        <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
-            <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="w-full text-5xl font-bold text-center mb-6 focus:outline-none text-slate-800">
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <select id="metodo" class="p-3 bg-slate-50 rounded-2xl text-sm outline-none border-none">
-                    <option value="Amex">💳 Amex</option>
-                    <option value="Efectivo">💵 Efectivo</option>
-                    <option value="Débito">🏦 Débito</option>
-                </select>
-                <select id="categoria" class="p-3 bg-slate-50 rounded-2xl text-sm outline-none border-none">
-                    <option value="Comida">🍟 Comida</option>
-                    <option value="Pasto">🌿 Hogar/Pasto</option>
-                    <option value="Servicios">⚡ Servicios</option>
-                    <option value="Otros">📦 Otros</option>
-                </select>
-            </div>
-            <button onclick="agregarGasto()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">Registrar Gasto</button>
-        </div>
-
-        <h3 class="font-bold text-slate-800 mt-8 mb-4 ml-2">Movimientos Recientes</h3>
-        <div id="lista" class="space-y-3"></div>
-    </div>
+<body class="bg-slate-50 pb-24 font-sans text-slate-900">
+    <div id="app"></div>
 
     <script>
-        let gastos = JSON.parse(localStorage.getItem('gastos_app')) || [];
-        function actualizarUI() {
-            const lista = document.getElementById('lista');
-            const balanceEl = document.getElementById('balance');
-            lista.innerHTML = '';
-            let total = 0;
-            gastos.forEach((g, index) => {
-                total -= parseFloat(g.monto);
-                lista.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-slate-50 p-2 rounded-xl text-lg">${g.metodo === 'Amex' ? '💳' : '💵'}</div>
-                            <div>
-                                <p class="font-bold text-sm text-slate-800">${g.categoria}</p>
-                                <p class="text-[10px] text-slate-400 font-medium">${g.metodo}</p>
+        // --- ESTADO Y PERSISTENCIA ---
+        let config = JSON.parse(localStorage.getItem('pro_config')) || {
+            metodos: ['Efectivo', 'Amex', 'Banamex Crédito', 'BBVA Débito'],
+            categorias: ['Comida', 'Súper', 'Gasolina', 'Oxxo', 'Servicios', 'Mantenimiento', 'Salud', 'Ropa'],
+            ingresosConceptos: ['Nómina', 'Bono', 'Aguinaldo', 'Vales de Despensa', 'Otro']
+        };
+        let movimientos = JSON.parse(localStorage.getItem('pro_movs')) || [];
+        let vistaActual = 'home'; // 'home' o 'config'
+
+        function render() {
+            const app = document.getElementById('app');
+            if (vistaActual === 'config') {
+                renderConfig(app);
+            } else {
+                renderHome(app);
+            }
+        }
+
+        // --- VISTA PRINCIPAL (HOME) ---
+        function renderHome(container) {
+            const total = movimientos.reduce((acc, m) => m.tipo === 'ingreso' ? acc + parseFloat(m.monto) : acc - parseFloat(m.monto), 0);
+            
+            container.innerHTML = `
+                <div class="bg-blue-700 p-8 rounded-b-[40px] text-white shadow-xl flex justify-between items-start">
+                    <div>
+                        <p class="opacity-70 text-xs uppercase tracking-wider font-bold">Balance General</p>
+                        <h2 class="text-4xl font-bold">$${total.toLocaleString('es-MX')}</h2>
+                    </div>
+                    <button onclick="cambiarVista('config')" class="bg-blue-600 p-2 rounded-full shadow-inner">
+                        ⚙️
+                    </button>
+                </div>
+
+                <div class="max-w-md mx-auto px-5 -mt-8">
+                    <div class="bg-white p-6 rounded-[30px] shadow-2xl space-y-4 border border-slate-100">
+                        <div class="flex bg-slate-100 rounded-2xl p-1">
+                            <button id="btnGasto" onclick="setTipo('gasto')" class="flex-1 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-red-600">GASTO</button>
+                            <button id="btnIngreso" onclick="setTipo('ingreso')" class="flex-1 py-2 rounded-xl text-xs font-bold transition-all text-slate-500">INGRESO</button>
+                        </div>
+
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <span class="text-2xl font-bold text-slate-400">$</span>
+                            <input type="number" id="m_monto" inputmode="decimal" placeholder="0.00" class="w-full text-4xl font-bold focus:outline-none">
+                        </div>
+
+                        <input type="text" id="m_desc" placeholder="Descripción (ej. Restaurante La Libertad)" class="w-full p-3 bg-slate-50 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500">
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 ml-1">CATEGORÍA / CONCEPTO</label>
+                                <select id="m_cat" class="w-full p-3 bg-slate-50 rounded-xl text-xs outline-none appearance-none">
+                                    </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 ml-1">MÉTODO DE PAGO</label>
+                                <select id="m_metodo" class="w-full p-3 bg-slate-50 rounded-xl text-xs outline-none">
+                                    ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                </select>
                             </div>
                         </div>
-                        <span class="font-bold text-red-500">-$${parseFloat(g.monto).toLocaleString()}</span>
-                    </div>`;
-            });
-            balanceEl.innerText = `$${(total * -1).toLocaleString()}`;
-            localStorage.setItem('gastos_app', JSON.stringify(gastos));
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 ml-1">FECHA Y HORA (POR DEFAULT ACTUAL)</label>
+                            <input type="datetime-local" id="m_fecha" class="w-full p-3 bg-slate-50 rounded-xl text-xs outline-none">
+                        </div>
+
+                        <button onclick="registrarMovimiento()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">Confirmar Registro</button>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="font-bold text-slate-800 mb-4 flex justify-between items-center">
+                            Movimientos Recientes
+                            <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-full text-slate-600">${movimientos.length} regs</span>
+                        </h3>
+                        <div class="space-y-3">
+                            ${movimientos.map((m, i) => `
+                                <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm animate-fade-in">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${m.tipo === 'gasto' ? 'bg-red-50' : 'bg-green-50'}">
+                                            ${m.tipo === 'gasto' ? '💸' : '💰'}
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-800">${m.desc || m.cat}</p>
+                                            <p class="text-[10px] text-slate-400">${m.metodo} • ${formatearFecha(m.fecha)}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-500'} text-sm">
+                                            ${m.tipo === 'gasto' ? '-' : '+'}$${parseFloat(m.monto).toLocaleString()}
+                                        </p>
+                                        <button onclick="borrarMov(${i})" class="text-[9px] text-slate-300 hover:text-red-400">Eliminar</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            actualizarSelects('gasto');
+            document.getElementById('m_fecha').value = obtenerFechaLocal();
         }
-        function agregarGasto() {
-            const monto = document.getElementById('monto').value;
-            const metodo = document.getElementById('metodo').value;
-            const categoria = document.getElementById('categoria').value;
-            if(!monto || monto <= 0) return;
-            gastos.unshift({ monto, metodo, categoria, fecha: new Date() });
-            document.getElementById('monto').value = '';
-            actualizarUI();
+
+        // --- VISTA CONFIGURACIÓN ---
+        function renderConfig(container) {
+            container.innerHTML = `
+                <div class="p-6 max-w-md mx-auto space-y-8">
+                    <div class="flex items-center gap-4">
+                        <button onclick="cambiarVista('home')" class="text-2xl">⬅️</button>
+                        <h1 class="text-2xl font-bold">Configuración</h1>
+                    </div>
+
+                    <section class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h2 class="font-bold mb-4 text-blue-600">Mis Tarjetas / Cuentas</h2>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="newCard" placeholder="Ej: Banorte" class="flex-1 p-2 bg-slate-50 rounded-lg text-sm outline-none">
+                            <button onclick="addItem('metodos', 'newCard')" class="bg-blue-600 text-white px-4 rounded-lg text-sm font-bold">+</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${config.metodos.map((m, i) => `
+                                <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs flex items-center gap-2">
+                                    ${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400 font-bold">×</button>
+                                </span>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    <section class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h2 class="font-bold mb-4 text-blue-600">Categorías de Gasto</h2>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="newCat" placeholder="Ej: Gimnasio" class="flex-1 p-2 bg-slate-50 rounded-lg text-sm outline-none">
+                            <button onclick="addItem('categorias', 'newCat')" class="bg-blue-600 text-white px-4 rounded-lg text-sm font-bold">+</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${config.categorias.map((c, i) => `
+                                <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs flex items-center gap-2">
+                                    ${c} <button onclick="removeItem('categorias', ${i})" class="text-red-400 font-bold">×</button>
+                                </span>
+                            `).join('')}
+                        </div>
+                    </section>
+                </div>
+            `;
         }
-        actualizarUI();
+
+        // --- LÓGICA ---
+        let tipoSeleccionado = 'gasto';
+
+        function setTipo(tipo) {
+            tipoSeleccionado = tipo;
+            const btnGasto = document.getElementById('btnGasto');
+            const btnIngreso = document.getElementById('btnIngreso');
+            
+            if (tipo === 'gasto') {
+                btnGasto.className = "flex-1 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-red-600";
+                btnIngreso.className = "flex-1 py-2 rounded-xl text-xs font-bold transition-all text-slate-500";
+            } else {
+                btnIngreso.className = "flex-1 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-green-600";
+                btnGasto.className = "flex-1 py-2 rounded-xl text-xs font-bold transition-all text-slate-500";
+            }
+            actualizarSelects(tipo);
+        }
+
+        function actualizarSelects(tipo) {
+            const select = document.getElementById('m_cat');
+            const opciones = tipo === 'gasto' ? config.categorias : config.ingresosConceptos;
+            select.innerHTML = opciones.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+
+        function registrarMovimiento() {
+            const monto = document.getElementById('m_monto').value;
+            if (!monto || monto <= 0) return alert('Pon un monto válido');
+
+            const mov = {
+                monto,
+                tipo: tipoSeleccionado,
+                desc: document.getElementById('m_desc').value,
+                cat: document.getElementById('m_cat').value,
+                metodo: document.getElementById('m_metodo').value,
+                fecha: document.getElementById('m_fecha').value
+            };
+
+            movimientos.unshift(mov);
+            localStorage.setItem('pro_movs', JSON.stringify(movimientos));
+            render();
+        }
+
+        function addItem(key, inputId) {
+            const val = document.getElementById(inputId).value.trim();
+            if (val) {
+                config[key].push(val);
+                localStorage.setItem('pro_config', JSON.stringify(config));
+                render();
+            }
+        }
+
+        function removeItem(key, index) {
+            config[key].splice(index, 1);
+            localStorage.setItem('pro_config', JSON.stringify(config));
+            render();
+        }
+
+        function borrarMov(index) {
+            if(confirm('¿Borrar registro?')) {
+                movimientos.splice(index, 1);
+                localStorage.setItem('pro_movs', JSON.stringify(movimientos));
+                render();
+            }
+        }
+
+        function cambiarVista(v) { vistaActual = v; render(); }
+
+        function obtenerFechaLocal() {
+            const ahora = new Date();
+            ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            return ahora.toISOString().slice(0, 16);
+        }
+
+        function formatearFecha(f) {
+            const d = new Date(f);
+            return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        }
+
+        render();
     </script>
+    <style>
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.3s ease-out; }
+    </style>
 </body>
 </html>
