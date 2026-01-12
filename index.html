@@ -9,11 +9,13 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
-        .animate-slide { animation: slideUp 0.4s ease-out; }
+        .animate-slide { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* Evita que el scroll se vea feo en móviles */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-[#F3F6FF] pb-24 text-slate-900">
+<body class="bg-[#F3F6FF] text-slate-900 overflow-x-hidden">
     <div id="app"></div>
 
     <script>
@@ -29,37 +31,33 @@
         let tipoActual = 'gasto';
 
         const ejemplos = {
-            'Comida': 'Ej: Restaurante La Libertad',
-            'Súper': 'Ej: Compras en Costco',
-            'Gasolina': 'Ej: Carga tanque lleno',
-            'Oxxo': 'Ej: Café y galletas',
-            'Mantenimiento': 'Ej: Pago Pasto Zoysia',
-            'Nómina': 'Ej: Depósito quincena',
-            'Bono': 'Ej: Bono resultados',
-            'Vales': 'Ej: Despensa mensual'
+            'Comida': 'Restaurante La Libertad',
+            'Súper': 'Compras en Costco',
+            'Gasolina': 'Carga tanque lleno',
+            'Oxxo': 'Café y galletas',
+            'Mantenimiento': 'Pago Pasto Zoysia',
+            'Nómina': 'Depósito quincena',
+            'Bono': 'Bono resultados',
+            'Vales': 'Despensa mensual'
         };
 
         function render() {
             const container = document.getElementById('app');
-            if (vistaActual === 'onboarding') {
-                renderOnboarding(container);
-            } else if (vistaActual === 'config') {
-                renderConfig(container);
-            } else {
-                renderHome(container);
-            }
+            container.innerHTML = ''; // Limpiar
+            if (vistaActual === 'onboarding') renderOnboarding(container);
+            else if (vistaActual === 'config') renderConfig(container);
+            else renderHome(container);
         }
 
-        // --- PANTALLA INICIAL (ONBOARDING) ---
         function renderOnboarding(c) {
             c.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center p-6 animate-slide">
                     <div class="w-full max-w-md bg-white p-8 rounded-[40px] shadow-2xl text-center border border-slate-100">
                         <div class="text-6xl mb-6">💎</div>
                         <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Bienvenido</h1>
-                        <p class="text-slate-400 mb-8">Personaliza tu experiencia,<br>¿cómo te llamas?</p>
+                        <p class="text-slate-400 mb-8">¿Cómo te llamas?</p>
                         <input type="text" id="user_name" placeholder="Tu nombre" 
-                            class="w-full p-5 bg-slate-50 rounded-2xl mb-6 text-center text-xl font-bold outline-none focus:ring-4 ring-blue-50 border-none">
+                            class="w-full p-5 bg-slate-50 rounded-2xl mb-6 text-center text-xl font-bold outline-none focus:ring-4 ring-blue-50">
                         <button onclick="saveName()" 
                             class="w-full gradient-bg text-white py-5 rounded-2xl font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest">
                             Comenzar
@@ -69,98 +67,87 @@
         }
 
         function saveName() {
-            const input = document.getElementById('user_name');
-            const nombre = input.value.trim();
-            if (nombre) {
-                config.nombre = nombre;
+            const val = document.getElementById('user_name').value.trim();
+            if (val) {
+                config.nombre = val;
                 localStorage.setItem('elite_config', JSON.stringify(config));
                 vistaActual = 'home';
                 render();
-            } else {
-                input.classList.add('ring-red-200', 'ring-2');
             }
         }
 
-        // --- VISTA HOME ---
         function renderHome(c) {
             const total = movimientos.reduce((acc, m) => m.tipo === 'ingreso' ? acc + parseFloat(m.monto) : acc - parseFloat(m.monto), 0);
             
             c.innerHTML = `
-                <div class="gradient-bg pt-14 pb-24 px-8 rounded-b-[50px] text-white shadow-2xl relative">
+                <div class="gradient-bg pt-14 pb-28 px-8 rounded-b-[50px] text-white shadow-2xl relative z-0">
                     <div class="flex justify-between items-center mb-6">
                         <div>
-                            <p class="opacity-70 text-sm font-semibold">Hola, ${config.nombre} 👋</p>
+                            <p class="opacity-70 text-sm font-semibold italic">Hola, ${config.nombre}</p>
                             <h2 class="text-4xl font-extrabold tracking-tight">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</h2>
                         </div>
                         <button onclick="cambiarVista('config')" class="bg-white/20 p-3 rounded-2xl backdrop-blur-md active:scale-90 transition-all">⚙️</button>
                     </div>
                 </div>
 
-                <div class="max-w-md mx-auto px-5 -mt-16 animate-slide">
-                    <div class="bg-white p-7 rounded-[40px] shadow-2xl border border-white space-y-6">
+                <div class="max-w-md mx-auto px-5 -mt-20 relative z-10 animate-slide pb-10">
+                    <div class="bg-white p-6 rounded-[40px] shadow-2xl border border-white space-y-5">
                         <div class="flex bg-slate-100 rounded-2xl p-1.5">
-                            <button onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-white shadow-md text-red-600' : 'text-slate-400'} uppercase">Gasto</button>
-                            <button onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-xs font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-white shadow-md text-green-600' : 'text-slate-400'} uppercase">Ingreso</button>
+                            <button onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-white shadow-md text-red-600' : 'text-slate-400'} uppercase">Gasto</button>
+                            <button onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-white shadow-md text-green-600' : 'text-slate-400'} uppercase">Ingreso</button>
                         </div>
 
-                        <div class="text-center">
+                        <div class="text-center py-2">
                             <input type="number" id="monto" inputmode="decimal" placeholder="0.00" 
                                 class="text-6xl font-extrabold w-full text-center outline-none text-slate-800 placeholder:text-slate-100 bg-transparent">
                         </div>
 
-                        <div class="space-y-4">
+                        <div class="space-y-3">
                             <input type="text" id="desc" placeholder="${ejemplos[config.categorias[0]] || 'Descripción...'}" 
                                 class="w-full p-4 bg-slate-50 rounded-2xl text-sm border-none outline-none focus:ring-2 ring-blue-100 font-medium">
                             
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="space-y-1">
-                                    <label class="text-[9px] font-extrabold text-slate-400 uppercase ml-2">Categoría</label>
-                                    <select id="cat" onchange="updatePlaceholder()" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none appearance-none">
-                                        ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[9px] font-extrabold text-slate-400 uppercase ml-2">Cuenta</label>
-                                    <select id="metodo" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold outline-none appearance-none">
-                                        ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
-                                    </select>
-                                </div>
+                                <select id="cat" onchange="updatePlaceholder()" class="w-full p-4 bg-slate-50 rounded-2xl text-[11px] font-bold outline-none border-none">
+                                    ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
+                                </select>
+                                <select id="metodo" class="w-full p-4 bg-slate-50 rounded-2xl text-[11px] font-bold outline-none border-none">
+                                    ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                </select>
                             </div>
 
                             <div class="bg-slate-50 rounded-2xl p-4">
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase mb-1">Fecha y Hora Registro</label>
-                                <input type="datetime-local" id="fecha" class="w-full bg-transparent text-xs font-bold outline-none text-slate-700">
+                                <label class="block text-[8px] font-extrabold text-slate-300 uppercase mb-1">Fecha y Hora</label>
+                                <input type="datetime-local" id="fecha" class="w-full bg-transparent text-[11px] font-bold outline-none text-slate-700">
                             </div>
                         </div>
 
-                        <button onclick="registrar()" class="w-full gradient-bg text-white py-5 rounded-[25px] font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">
+                        <button onclick="registrar()" class="w-full gradient-bg text-white py-5 rounded-[25px] font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">
                             Registrar ${tipoActual}
                         </button>
                     </div>
 
-                    <div class="mt-12 mb-6 flex justify-between items-center px-2">
-                        <h3 class="font-extrabold text-slate-800 text-xl">Actividad</h3>
-                        <span class="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full uppercase">${movimientos.length} movimientos</span>
+                    <div class="mt-10 mb-6 flex justify-between items-center px-2">
+                        <h3 class="font-extrabold text-slate-800 text-lg tracking-tight">Actividad Reciente</h3>
+                        <span class="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-tighter">${movimientos.length} regs</span>
                     </div>
 
-                    <div class="space-y-4">
-                        ${movimientos.length === 0 ? '<p class="text-center text-slate-300 py-10 font-medium">No hay registros aún</p>' : ''}
+                    <div class="space-y-3">
                         ${movimientos.map((m, i) => `
-                            <div class="bg-white p-5 rounded-[30px] flex justify-between items-center shadow-sm border border-slate-50 animate-slide">
+                            <div class="bg-white p-5 rounded-[30px] flex justify-between items-center shadow-sm border border-slate-50">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${m.tipo === 'gasto' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${m.tipo === 'gasto' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}">
                                         ${m.tipo === 'gasto' ? '📉' : '📈'}
                                     </div>
                                     <div>
-                                        <p class="font-extrabold text-sm text-slate-800">${m.desc || m.cat}</p>
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
+                                        <p class="font-extrabold text-sm text-slate-800 leading-none mb-1">${m.desc || m.cat}</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-500'}">
+                                    <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-500'} text-sm leading-none mb-1">
                                         ${m.tipo === 'gasto' ? '-' : '+'}$${parseFloat(m.monto).toLocaleString()}
                                     </p>
-                                    <button onclick="borrar(${i})" class="text-[10px] font-bold text-slate-200 hover:text-red-300 transition-colors uppercase">Borrar</button>
+                                    <button onclick="borrar(${i})" class="text-[9px] font-bold text-slate-200 hover:text-red-300 uppercase">Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -172,10 +159,9 @@
             if(inputFecha) inputFecha.value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         }
 
-        // --- VISTA CONFIG ---
         function renderConfig(c) {
             c.innerHTML = `
-                <div class="p-8 max-w-md mx-auto space-y-8 animate-slide">
+                <div class="p-8 max-w-md mx-auto space-y-8 animate-slide pb-20">
                     <div class="flex items-center justify-between">
                         <button onclick="cambiarVista('home')" class="bg-white p-4 rounded-2xl shadow-sm text-xl active:scale-90 transition-all">⬅️</button>
                         <h1 class="text-2xl font-extrabold">Ajustes</h1>
@@ -184,100 +170,59 @@
 
                     <div class="bg-white p-8 rounded-[40px] shadow-sm border space-y-8">
                         <div>
-                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Nombre de Usuario</label>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Nombre</label>
                             <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" 
-                                class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500 border-none">
+                                class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none border-none">
                         </div>
                         
                         <div>
-                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Mis Tarjetas / Cuentas</label>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Tarjetas / Cuentas</label>
                             <div class="flex gap-2 mt-3 mb-4">
-                                <input type="text" id="newCard" placeholder="Nueva..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-sm outline-none font-bold">
+                                <input type="text" id="newCard" placeholder="Nueva..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-xs outline-none font-bold">
                                 <button onclick="addItem('metodos', 'newCard')" class="gradient-bg text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 ${config.metodos.map((m, i) => `
-                                    <span class="bg-slate-100 text-[10px] font-bold px-4 py-2 rounded-xl flex items-center gap-2">
-                                        ${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400 ml-1">×</button>
+                                    <span class="bg-slate-100 text-[9px] font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                                        ${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400">×</button>
                                     </span>
                                 `).join('')}
                             </div>
                         </div>
                     </div>
 
-                    <button onclick="resetApp()" class="w-full text-slate-300 text-[10px] font-extrabold uppercase tracking-widest py-10">
-                        Restablecer Aplicación
-                    </button>
+                    <button onclick="resetApp()" class="w-full text-slate-300 text-[10px] font-extrabold uppercase py-10">Restablecer App</button>
                 </div>`;
         }
 
-        // --- LÓGICA DE CONTROL ---
+        // --- LÓGICA ---
         function setTipo(t) { tipoActual = t; render(); }
-        
         function updatePlaceholder() {
             const cat = document.getElementById('cat').value;
             const inputDesc = document.getElementById('desc');
-            if(inputDesc) {
-                inputDesc.placeholder = ejemplos[cat] || (tipoActual === 'gasto' ? 'En qué gastaste...' : 'Concepto de ingreso...');
-            }
+            if(inputDesc) inputDesc.placeholder = ejemplos[cat] || 'Descripción...';
         }
-
         function registrar() {
             const m = document.getElementById('monto').value;
             if(!m || m <= 0) return;
-            const mov = {
-                monto: m,
-                tipo: tipoActual,
-                desc: document.getElementById('desc').value,
-                cat: document.getElementById('cat').value,
-                metodo: document.getElementById('metodo').value,
+            movimientos.unshift({
+                monto: m, tipo: tipoActual, desc: document.getElementById('desc').value,
+                cat: document.getElementById('cat').value, metodo: document.getElementById('metodo').value,
                 fecha: document.getElementById('fecha').value
-            };
-            movimientos.unshift(mov);
+            });
             localStorage.setItem('elite_movs', JSON.stringify(movimientos));
             render();
         }
-
         function addItem(key, id) {
             const val = document.getElementById(id).value.trim();
-            if(val) {
-                config[key].push(val);
-                localStorage.setItem('elite_config', JSON.stringify(config));
-                render();
-            }
+            if(val) { config[key].push(val); localStorage.setItem('elite_config', JSON.stringify(config)); render(); }
         }
-
-        function removeItem(key, i) {
-            config[key].splice(i, 1);
-            localStorage.setItem('elite_config', JSON.stringify(config));
-            render();
-        }
-
-        function updateNombre(v) {
-            if(v.trim()) {
-                config.nombre = v.trim();
-                localStorage.setItem('elite_config', JSON.stringify(config));
-            }
-        }
-
+        function removeItem(key, i) { config[key].splice(i, 1); localStorage.setItem('elite_config', JSON.stringify(config)); render(); }
+        function updateNombre(v) { if(v.trim()) { config.nombre = v.trim(); localStorage.setItem('elite_config', JSON.stringify(config)); } }
         function cambiarVista(v) { vistaActual = v; render(); }
-        
-        function borrar(i) {
-            if(confirm('¿Eliminar este registro?')) {
-                movimientos.splice(i, 1);
-                localStorage.setItem('elite_movs', JSON.stringify(movimientos));
-                render();
-            }
-        }
+        function borrar(i) { if(confirm('¿Borrar?')) { movimientos.splice(i, 1); localStorage.setItem('elite_movs', JSON.stringify(movimientos)); render(); } }
+        function resetApp() { if(confirm('¿Borrar todo?')) { localStorage.clear(); location.reload(); } }
 
-        function resetApp() {
-            if(confirm('¿ESTÁS SEGURO? Se borrarán todos tus gastos y configuración.')) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        // Iniciar la App
         render();
     </script>
 </body>
