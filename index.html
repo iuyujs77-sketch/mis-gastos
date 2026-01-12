@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Elite Pro</title>
+    <title>Finance Élite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/v4S6Y6V/logo-finance.png"> 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+        /* Paleta de colores basada en tu logo */
+        .gradient-premium { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-text { color: #d4af37; }
+        .gold-bg { background: #d4af37; }
         .animate-slide { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .edit-mode { border: 2px solid #2563eb; background-color: #f0f7ff; }
+        .edit-mode { border: 2px solid #d4af37; background-color: #fffdf5; }
     </style>
 </head>
-<body class="bg-[#F3F6FF] text-slate-900 overflow-x-hidden">
+<body class="bg-[#F8FAFC] text-slate-900 overflow-x-hidden">
     <div id="app"></div>
 
     <script>
-        // --- ESTADO INICIAL ---
-        let config = JSON.parse(localStorage.getItem('elite_config')) || {
+        // --- ESTADO ---
+        let config = JSON.parse(localStorage.getItem('elite_pro_config')) || {
             nombre: "",
             metodos: ['Amex', 'Banamex Crédito', 'BBVA Débito', 'Efectivo'],
             categorias: ['Comida', 'Súper', 'Gasolina', 'Oxxo', 'Servicios', 'Mantenimiento', 'Salud', 'Ropa', 'Gym'],
             conceptosIngreso: ['Nómina', 'Bono', 'Aguinaldo', 'Vales']
         };
-        let movimientos = JSON.parse(localStorage.getItem('elite_movs')) || [];
+        let movimientos = JSON.parse(localStorage.getItem('elite_pro_movs')) || [];
         let vistaActual = config.nombre ? 'home' : 'onboarding';
         let tipoActual = 'gasto';
         let editandoIndex = null;
@@ -38,15 +42,28 @@
             else renderHome(container);
         }
 
+        // --- PANTALLA DE LOGO Y BIENVENIDA ---
         function renderOnboarding(c) {
             c.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center p-6 animate-slide">
-                    <div class="w-full max-w-md bg-white p-8 rounded-[40px] shadow-2xl text-center border border-slate-100">
-                        <div class="text-6xl mb-6">💎</div>
-                        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">¡Bienvenido!</h1>
-                        <p class="text-slate-400 mb-8 text-sm">Ingresa tu nombre para comenzar</p>
-                        <input type="text" id="user_name" placeholder="Tu nombre" class="w-full p-5 bg-slate-50 rounded-2xl mb-6 text-center text-xl font-bold outline-none border-none">
-                        <button onclick="saveName()" class="w-full gradient-bg text-white py-5 rounded-2xl font-extrabold shadow-lg uppercase tracking-widest">Comenzar</button>
+                <div class="min-h-screen gradient-premium flex items-center justify-center p-6 animate-slide">
+                    <div class="w-full max-w-md text-center">
+                        <div class="mb-8 relative inline-block">
+                            <div class="w-32 h-32 rounded-full border-4 border-[#d4af37] flex items-center justify-center bg-slate-900 shadow-2xl mx-auto">
+                                <span class="text-6xl font-extrabold gold-text">F</span>
+                            </div>
+                            <div class="absolute -top-2 -right-1 text-3xl">👑</div>
+                        </div>
+                        <h1 class="text-3xl font-extrabold text-white mb-2 uppercase tracking-widest">Finance Élite</h1>
+                        <p class="text-slate-400 mb-10 text-sm">Gestión de activos de alto nivel</p>
+                        
+                        <div class="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/10 shadow-2xl">
+                            <input type="text" id="user_name" placeholder="Ingresa tu nombre" 
+                                class="w-full p-5 bg-white/5 rounded-2xl mb-6 text-center text-xl font-bold text-white outline-none border border-white/20 focus:border-[#d4af37]">
+                            <button onclick="saveName()" 
+                                class="w-full gold-bg text-slate-900 py-5 rounded-2xl font-extrabold shadow-lg uppercase tracking-widest active:scale-95 transition-all">
+                                Entrar al Sistema
+                            </button>
+                        </div>
                     </div>
                 </div>`;
         }
@@ -60,79 +77,79 @@
             const total = movimientos.reduce((acc, m) => m.tipo === 'ingreso' ? acc + parseFloat(m.monto) : acc - parseFloat(m.monto), 0);
             
             c.innerHTML = `
-                <div class="gradient-bg pt-14 pb-28 px-8 rounded-b-[50px] text-white shadow-2xl relative z-0">
+                <div class="gradient-premium pt-14 pb-32 px-8 rounded-b-[50px] text-white shadow-2xl relative z-0">
                     <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <p class="opacity-70 text-sm font-semibold italic text-blue-100 uppercase tracking-tighter">Hola, ${config.nombre}</p>
-                            <h2 class="text-4xl font-extrabold tracking-tight">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</h2>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full border border-[#d4af37] flex items-center justify-center bg-slate-800 font-bold gold-text text-xs">F</div>
+                            <div>
+                                <p class="opacity-50 text-[10px] font-bold uppercase tracking-widest">Finance Élite</p>
+                                <p class="text-sm font-semibold italic gold-text">Bienvenido, ${config.nombre}</p>
+                            </div>
                         </div>
-                        <button onclick="cambiarVista('config')" class="bg-white/20 p-3 rounded-2xl backdrop-blur-md active:scale-90 transition-all text-xl">⚙️</button>
+                        <button onclick="cambiarVista('config')" class="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 active:scale-90 transition-all">⚙️</button>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="opacity-60 text-xs font-bold uppercase tracking-[0.2em] mb-1">Balance Consolidado</p>
+                        <h2 class="text-5xl font-extrabold tracking-tighter">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</h2>
                     </div>
                 </div>
 
-                <div class="max-w-md mx-auto px-5 -mt-20 relative z-10 animate-slide pb-10">
-                    <div id="formContainer" class="bg-white p-6 rounded-[40px] shadow-2xl border border-white space-y-5 ${editandoIndex !== null ? 'edit-mode' : ''}">
-                        <div class="flex justify-between items-center px-1">
-                            <h3 class="font-extrabold text-[10px] uppercase tracking-widest text-slate-400">
-                                ${editandoIndex !== null ? '✏️ Editando Movimiento' : '🆕 Registro Rápido'}
-                            </h3>
-                            ${editandoIndex !== null ? `<button onclick="cancelarEdicion()" class="text-[10px] font-bold text-blue-600 uppercase">Cancelar</button>` : ''}
-                        </div>
-
-                        <div class="flex bg-slate-100 rounded-2xl p-1.5">
-                            <button onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-white shadow-md text-red-600' : 'text-slate-400'} uppercase">Gasto</button>
-                            <button onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-white shadow-md text-green-600' : 'text-slate-400'} uppercase">Ingreso</button>
+                <div class="max-w-md mx-auto px-5 -mt-20 relative z-10 animate-slide pb-20">
+                    <div id="formContainer" class="bg-white p-7 rounded-[45px] shadow-2xl border border-slate-100 space-y-6 ${editandoIndex !== null ? 'edit-mode' : ''}">
+                        <div class="flex bg-slate-50 rounded-2xl p-1.5 border border-slate-100">
+                            <button onclick="setTipo('gasto')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'gasto' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'} uppercase tracking-widest">Gasto</button>
+                            <button onclick="setTipo('ingreso')" class="flex-1 py-3 rounded-xl text-[10px] font-extrabold transition-all ${tipoActual === 'ingreso' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'} uppercase tracking-widest">Ingreso</button>
                         </div>
 
                         <div class="text-center py-2">
                             <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="text-6xl font-extrabold w-full text-center outline-none text-slate-800 placeholder:text-slate-100 bg-transparent">
                         </div>
 
-                        <div class="space-y-3">
-                            <input type="text" id="desc" placeholder="Descripción (ej. Gym, Super...)" class="w-full p-4 bg-slate-50 rounded-2xl text-sm border-none outline-none font-medium">
+                        <div class="space-y-4">
+                            <input type="text" id="desc" placeholder="¿En qué se utilizó?" class="w-full p-4 bg-slate-50 rounded-2xl text-sm border-none outline-none font-bold text-slate-700">
                             <div class="grid grid-cols-2 gap-3">
-                                <select id="cat" class="w-full p-4 bg-slate-50 rounded-2xl text-[11px] font-bold outline-none border-none">
+                                <select id="cat" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-extrabold outline-none border-none text-slate-500 uppercase tracking-tighter">
                                     ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
                                 </select>
-                                <select id="metodo" class="w-full p-4 bg-slate-50 rounded-2xl text-[11px] font-bold outline-none border-none">
+                                <select id="metodo" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-extrabold outline-none border-none text-slate-500 uppercase tracking-tighter">
                                     ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="bg-slate-50 rounded-2xl p-4">
-                                <label class="block text-[8px] font-extrabold text-slate-300 uppercase mb-1 tracking-widest">Fecha y Hora</label>
-                                <input type="datetime-local" id="fecha" class="w-full bg-transparent text-[11px] font-bold outline-none text-slate-700">
+                            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center justify-between">
+                                <span class="text-[8px] font-extrabold text-slate-400 uppercase">Fecha</span>
+                                <input type="datetime-local" id="fecha" class="bg-transparent text-[11px] font-bold outline-none text-slate-700">
                             </div>
                         </div>
 
-                        <button onclick="guardar()" class="w-full gradient-bg text-white py-5 rounded-[25px] font-extrabold shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">
-                            ${editandoIndex !== null ? 'Guardar Cambios' : 'Registrar ' + tipoActual}
+                        <button onclick="guardar()" class="w-full gradient-premium text-white py-5 rounded-[25px] font-extrabold shadow-xl active:scale-95 transition-all uppercase tracking-[0.2em] text-[10px]">
+                            ${editandoIndex !== null ? 'Actualizar Registro' : 'Confirmar Transacción'}
                         </button>
                     </div>
 
-                    <div class="mt-10 mb-6 flex justify-between items-center px-2">
-                        <h3 class="font-extrabold text-slate-800 text-lg tracking-tight">Actividad</h3>
-                        <span class="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full uppercase">${movimientos.length} regs</span>
-                    </div>
+                    <h3 class="font-extrabold text-slate-800 text-lg mt-10 mb-6 flex justify-between items-center px-2 uppercase tracking-widest text-[12px]">
+                        Libro de Movimientos
+                        <span class="text-[8px] gold-bg text-slate-900 px-3 py-1 rounded-full">${movimientos.length} regs</span>
+                    </h3>
 
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         ${movimientos.map((m, i) => `
-                            <div class="bg-white p-5 rounded-[30px] flex justify-between items-center shadow-sm border border-slate-50">
+                            <div class="bg-white p-5 rounded-[35px] flex justify-between items-center shadow-sm border border-slate-100">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${m.tipo === 'gasto' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${m.tipo === 'gasto' ? 'bg-slate-50 text-slate-400' : 'bg-gold-text text-white'}">
                                         ${m.tipo === 'gasto' ? '📉' : '📈'}
                                     </div>
                                     <div>
-                                        <p class="font-extrabold text-sm text-slate-800 leading-none mb-1">${m.desc || m.cat}</p>
-                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
+                                        <p class="font-extrabold text-sm text-slate-800 leading-tight mb-1">${m.desc || m.cat}</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">${m.metodo} • ${new Date(m.fecha).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-500'} text-sm mb-1">
+                                    <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-600'} text-sm">
                                         ${m.tipo === 'gasto' ? '-' : '+'}$${parseFloat(m.monto).toLocaleString()}
                                     </p>
-                                    <div class="flex gap-2 justify-end">
-                                        <button onclick="cargarParaEditar(${i})" class="text-[9px] font-bold text-blue-400 uppercase">Editar</button>
-                                        <button onclick="borrar(${i})" class="text-[9px] font-bold text-slate-200 hover:text-red-300 uppercase">Borrar</button>
+                                    <div class="flex gap-2 justify-end mt-1">
+                                        <button onclick="cargarParaEditar(${i})" class="text-[8px] font-extrabold text-blue-400 uppercase">Edit</button>
+                                        <button onclick="borrar(${i})" class="text-[8px] font-extrabold text-slate-200 hover:text-red-300 uppercase">Del</button>
                                     </div>
                                 </div>
                             </div>
@@ -145,72 +162,19 @@
             }
         }
 
-        function renderConfig(c) {
-            c.innerHTML = `
-                <div class="p-8 max-w-md mx-auto space-y-8 animate-slide pb-24">
-                    <div class="flex items-center justify-between">
-                        <button onclick="cambiarVista('home')" class="bg-white p-4 rounded-2xl shadow-sm text-xl active:scale-90 transition-all">⬅️</button>
-                        <h1 class="text-2xl font-extrabold tracking-tight">Ajustes</h1>
-                        <div class="w-12"></div>
-                    </div>
-
-                    <div class="bg-white p-7 rounded-[40px] shadow-sm border space-y-8">
-                        <div>
-                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Nombre del Titular</label>
-                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none border-none">
-                        </div>
-                        
-                        <div>
-                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Cuentas / Tarjetas</label>
-                            <div class="flex gap-2 mt-3 mb-4">
-                                <input type="text" id="newCard" placeholder="Ej: Banorte..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-xs outline-none font-bold">
-                                <button onclick="addItem('metodos', 'newCard')" class="gradient-bg text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                ${config.metodos.map((m, i) => `
-                                    <span class="bg-slate-100 text-[9px] font-bold px-4 py-2 rounded-xl flex items-center gap-2">
-                                        ${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400">×</button>
-                                    </span>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Categorías de Gasto</label>
-                            <div class="flex gap-2 mt-3 mb-4">
-                                <input type="text" id="newCat" placeholder="Ej: Gym, Mascota..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-xs outline-none font-bold">
-                                <button onclick="addItem('categorias', 'newCat')" class="gradient-bg text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                ${config.categorias.map((c, i) => `
-                                    <span class="bg-slate-50 text-[9px] font-bold px-4 py-2 rounded-xl border border-slate-100 flex items-center gap-2">
-                                        ${c} <button onclick="removeItem('categorias', ${i})" class="text-red-400">×</button>
-                                    </span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="resetApp()" class="w-full text-slate-300 text-[10px] font-extrabold uppercase py-10 tracking-widest">Restablecer Todo</button>
-                </div>`;
-        }
-
         // --- LÓGICA ---
         function setTipo(t) { tipoActual = t; render(); }
         
         function guardar() {
             const monto = document.getElementById('monto').value;
-            if (!monto || monto <= 0) return alert('Ingresa un monto válido');
-
+            if (!monto || monto <= 0) return alert('Ingrese un monto válido');
             const mov = {
                 monto: monto, tipo: tipoActual, desc: document.getElementById('desc').value,
                 cat: document.getElementById('cat').value, metodo: document.getElementById('metodo').value,
                 fecha: document.getElementById('fecha').value
             };
-
             if (editandoIndex !== null) { movimientos[editandoIndex] = mov; editandoIndex = null; }
             else { movimientos.unshift(mov); }
-
             saveToStorage(); render();
         }
 
@@ -227,27 +191,50 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function cancelarEdicion() { editandoIndex = null; render(); }
-
-        function addItem(key, id) {
-            const val = document.getElementById(id).value.trim();
-            if(val) { config[key].push(val); saveToStorage(); render(); }
+        function renderConfig(c) {
+            c.innerHTML = `
+                <div class="p-8 max-w-md mx-auto space-y-8 animate-slide pb-24">
+                    <div class="flex items-center justify-between">
+                        <button onclick="cambiarVista('home')" class="bg-white p-4 rounded-2xl shadow-sm text-xl active:scale-90 transition-all">⬅️</button>
+                        <h1 class="text-2xl font-extrabold tracking-tight">Estructura</h1>
+                        <div class="w-12"></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Titular Élite</label>
+                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none border-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Cartera de Activos</label>
+                            <div class="flex gap-2 mt-3 mb-4">
+                                <input type="text" id="newCard" placeholder="Nueva cuenta..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-[10px] outline-none font-bold">
+                                <button onclick="addItem('metodos', 'newCard')" class="gradient-premium text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                ${config.metodos.map((m, i) => `<span class="bg-slate-100 text-[9px] font-bold px-4 py-2 rounded-xl flex items-center gap-2">${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400">×</button></span>`).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Categorías del Sistema</label>
+                            <div class="flex gap-2 mt-3 mb-4">
+                                <input type="text" id="newCat" placeholder="Nuevo gasto..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-[10px] outline-none font-bold">
+                                <button onclick="addItem('categorias', 'newCat')" class="gradient-premium text-white px-6 rounded-2xl font-bold active:scale-90">+</button>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                ${config.categorias.map((c, i) => `<span class="bg-slate-50 text-[9px] font-bold px-4 py-2 rounded-xl border border-slate-100 flex items-center gap-2">${c} <button onclick="removeItem('categorias', ${i})" class="text-red-400">×</button></span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
-        function removeItem(key, i) {
-            config[key].splice(i, 1);
-            saveToStorage(); render();
-        }
-
+        function addItem(key, id) { const val = document.getElementById(id).value.trim(); if(val) { config[key].push(val); saveToStorage(); render(); } }
+        function removeItem(key, i) { config[key].splice(i, 1); saveToStorage(); render(); }
         function updateNombre(v) { if(v.trim()) { config.nombre = v.trim(); saveToStorage(); } }
-        function saveToStorage() {
-            localStorage.setItem('elite_config', JSON.stringify(config));
-            localStorage.setItem('elite_movs', JSON.stringify(movimientos));
-        }
+        function saveToStorage() { localStorage.setItem('elite_pro_config', JSON.stringify(config)); localStorage.setItem('elite_pro_movs', JSON.stringify(movimientos)); }
         function cambiarVista(v) { vistaActual = v; render(); }
-        function borrar(i) { if(confirm('¿Borrar?')) { movimientos.splice(i,1); saveToStorage(); render(); } }
-        function resetApp() { if(confirm('¿Borrar todo?')) { localStorage.clear(); location.reload(); } }
-
+        function borrar(i) { if(confirm('¿Eliminar registro?')) { movimientos.splice(i,1); saveToStorage(); render(); } }
+        
         render();
     </script>
 </body>
