@@ -3,134 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finance Élite</title>
+    <title>Finance Élite 360</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0b141e; color: #fff; }
-        .dark-bg { background-color: #0b141e; }
-        .card-white { background-color: #ffffff; border-radius: 20px; padding: 20px; color: #1a202c; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .gradient-premium { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .gold-text { color: #d4af37; }
         .gold-bg { background: #d4af37; }
-        .input-elite { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 0; width: 100%; outline: none; color: #fff; font-size: 14px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .animate-up { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="pb-24 overflow-x-hidden">
+<body class="bg-[#F8FAFC] text-slate-900 pb-24">
     <div id="app"></div>
 
-    <nav class="fixed bottom-0 left-0 right-0 dark-bg border-t border-white/5 px-10 py-5 flex justify-between items-center z-50">
-        <button onclick="cambiarVista('home')" class="flex flex-col items-center gap-1 opacity-60">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-8 py-4 flex justify-between items-center z-50">
+        <button onclick="cambiarVista('home')" class="flex flex-col items-center gap-1">
             <span class="text-xl">🏠</span>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-white">Inicio</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter text-slate-400">Inicio</span>
         </button>
-        <button onclick="cambiarVista('metas')" class="flex flex-col items-center gap-1 opacity-60">
+        <button onclick="cambiarVista('metas')" class="flex flex-col items-center gap-1">
             <span class="text-xl">🎯</span>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-white">Metas</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter text-slate-400">Metas</span>
         </button>
-        <button onclick="cambiarVista('config')" class="flex flex-col items-center gap-1 opacity-60">
+        <button onclick="cambiarVista('config')" class="flex flex-col items-center gap-1">
             <span class="text-xl">⚙️</span>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-white">Ajustes</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter text-slate-400">Ajustes</span>
         </button>
     </nav>
 
     <script>
-        // --- ESTADO INICIAL ---
-        let config = JSON.parse(localStorage.getItem('elite_vFinal_config')) || {
-            nombre: "Usuario",
-            metodos: ['Efectivo', 'Amex'],
-            categorias: ['Comida', 'Súper', 'Gasolina'],
+        // --- TU LOGO (PROTEGIDO) ---
+        const MI_LOGO = "data:image/jpeg;base64,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";
+
+        // --- ESTADO ---
+        let config = JSON.parse(localStorage.getItem('e360_config')) || {
+            nombre: "",
+            metodos: ['Amex', 'Banamex Crédito', 'BBVA Débito', 'Efectivo'],
+            categorias: ['Comida', 'Súper', 'Gasolina', 'Servicios', 'Gym'],
+            conceptosIngreso: ['Nómina', 'Bono', 'Vales'],
             metas: []
         };
-        let movimientos = JSON.parse(localStorage.getItem('elite_vFinal_movs')) || [];
-        let vistaActual = 'home';
+        let movimientos = JSON.parse(localStorage.getItem('e360_movs')) || [];
+        let vistaActual = config.nombre ? 'home' : 'onboarding';
         let tipoActual = 'gasto';
 
         function render() {
             const container = document.getElementById('app');
-            container.innerHTML = '';
-            if (vistaActual === 'config') renderConfig(container);
+            if (vistaActual === 'onboarding') renderOnboarding(container);
             else if (vistaActual === 'metas') renderMetas(container);
+            else if (vistaActual === 'config') renderConfig(container);
             else renderHome(container);
+        }
+
+        function renderOnboarding(c) {
+            c.innerHTML = `
+                <div class="min-h-screen gradient-premium flex items-center justify-center p-8 text-center">
+                    <div class="animate-up">
+                        <div class="w-24 h-24 rounded-full border-2 border-gold-text flex items-center justify-center bg-slate-900 mx-auto mb-6 overflow-hidden">
+                            <img src="${MI_LOGO}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                            <span class="text-3xl font-extrabold gold-text">F</span>
+                        </div>
+                        <h1 class="text-xl font-extrabold text-white mb-8 tracking-widest uppercase">Finance Élite 360</h1>
+                        <input type="text" id="user_name" placeholder="Tu nombre" class="w-full p-5 bg-white/10 rounded-2xl mb-6 text-center text-white outline-none border border-white/20">
+                        <button onclick="saveName()" class="w-full gold-bg text-slate-900 py-5 rounded-2xl font-extrabold uppercase tracking-widest">Activar Sistema</button>
+                    </div>
+                </div>`;
+        }
+
+        function saveName() {
+            const n = document.getElementById('user_name').value.trim();
+            if (n) { config.nombre = n; saveConfig(); vistaActual = 'home'; render(); }
         }
 
         function renderHome(c) {
             const stats = calcularStats();
             c.innerHTML = `
-                <div class="pt-10 px-8 mb-8 animate-up">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full border border-gold-text/50 flex items-center justify-center bg-slate-800 font-bold gold-text text-xl shadow-lg">F</div>
-                        <h2 class="text-xl font-medium text-slate-300 tracking-tight">Hola, ${config.nombre}</h2>
+                <div class="gradient-premium pt-12 pb-32 px-6 rounded-b-[60px] text-white relative shadow-2xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full border border-gold-text/50 flex items-center justify-center bg-slate-800 overflow-hidden">
+                            <img src="${MI_LOGO}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                            <span class="gold-text font-bold text-xs">F</span>
+                        </div>
+                        <p class="text-[10px] font-bold gold-text uppercase">Élite Control • ${config.nombre}</p>
                     </div>
+                    <h2 class="text-5xl font-extrabold tracking-tighter mb-4">$${stats.totalBalance.toLocaleString()}</h2>
+                    <div class="max-w-xs bg-white/10 h-1 rounded-full overflow-hidden mb-2">
+                        <div class="h-full ${stats.alertaClase}" style="width: ${stats.porcentajeGastado}%"></div>
+                    </div>
+                    <p class="text-[9px] opacity-60 font-bold uppercase">${stats.mensajeAlerta}</p>
                 </div>
 
-                <div class="px-8 mb-8 animate-up">
-                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Gasto por cuenta</h3>
-                    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                        ${config.metodos.map(m => `
-                            <div class="min-w-[140px] card-white flex flex-col justify-between h-28">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-[10px] text-white font-bold">${m[0]}</div>
-                                    <span class="text-[10px] font-extrabold text-slate-800 uppercase">${m}</span>
+                <div class="max-w-md mx-auto px-5 -mt-20 space-y-6 animate-up">
+                    <div class="overflow-x-auto no-scrollbar flex gap-3">
+                        ${config.metodos.map(m => {
+                            const gastado = stats.porCuenta[m] || 0;
+                            return `
+                                <div class="min-w-[140px] bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex-shrink-0">
+                                    <p class="text-[8px] font-extrabold text-slate-400 uppercase mb-1">${m}</p>
+                                    <p class="text-sm font-extrabold text-slate-800">$${gastado.toLocaleString()}</p>
                                 </div>
-                                <div>
-                                    <p class="text-[8px] text-slate-400 font-bold mb-1 uppercase tracking-tighter">Total Gasto</p>
-                                    <p class="text-lg font-extrabold text-slate-900 leading-none">$${(stats.porCuenta[m] || 0).toLocaleString()}</p>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-white p-6 rounded-[40px] shadow-2xl space-y-4">
+                        <div class="flex bg-slate-50 rounded-2xl p-1 border border-slate-100">
+                            <button onclick="tipoActual='gasto'; render();" class="flex-1 py-3 rounded-xl text-[10px] font-bold ${tipoActual === 'gasto' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'} uppercase">Gasto</button>
+                            <button onclick="tipoActual='ingreso'; render();" class="flex-1 py-3 rounded-xl text-[10px] font-bold ${tipoActual === 'ingreso' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'} uppercase">Ingreso</button>
+                        </div>
+                        <input type="number" id="monto" inputmode="decimal" placeholder="0.00" class="text-5xl font-extrabold w-full text-center outline-none text-slate-800 placeholder:text-slate-100 bg-transparent">
+                        <div class="grid grid-cols-2 gap-3">
+                            <select id="cat" class="p-4 bg-slate-50 rounded-2xl text-[10px] font-extrabold uppercase outline-none">
+                                ${(tipoActual === 'gasto' ? config.categorias : config.conceptosIngreso).map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                            <select id="metodo" class="p-4 bg-slate-50 rounded-2xl text-[10px] font-extrabold uppercase text-blue-600 outline-none">
+                                ${config.metodos.map(m => `<option value="${m}">${m}</option>`).join('')}
+                            </select>
+                        </div>
+                        <input type="text" id="desc" placeholder="Descripción..." class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold text-slate-700 outline-none">
+                        <button onclick="registrar()" class="w-full gradient-premium text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px]">Registrar</button>
+                    </div>
+
+                    <div class="space-y-3 pb-10">
+                        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Movimientos Recientes</h3>
+                        ${movimientos.map((m, i) => `
+                            <div class="bg-white p-4 rounded-[25px] flex justify-between items-center shadow-sm border border-slate-50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-sm">${m.tipo === 'gasto' ? '📉' : '📈'}</div>
+                                    <div>
+                                        <p class="font-extrabold text-sm text-slate-800">${m.desc || m.cat}</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase">${m.metodo}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-extrabold ${m.tipo === 'gasto' ? 'text-red-500' : 'text-green-600'} text-sm">$${parseFloat(m.monto).toLocaleString()}</p>
+                                    <button onclick="borrar(${i})" class="text-[8px] font-bold text-slate-200 uppercase">Eliminar</button>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                </div>
-
-                <div class="px-8 animate-up">
-                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Nuevo Movimiento</h3>
-                    <div class="bg-white/5 p-7 rounded-[35px] border border-white/5 shadow-2xl space-y-5">
-                        <input type="number" id="monto" inputmode="decimal" placeholder="Monto $0.00" class="w-full bg-transparent text-4xl font-extrabold outline-none text-center text-white border-b border-white/10 pb-4">
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <select id="cat" class="input-elite">
-                                <option value="" disabled selected>Categoría</option>
-                                ${config.categorias.map(cat => `<option class="bg-slate-900" value="${cat}">${cat}</option>`).join('')}
-                            </select>
-                            <select id="metodo" class="input-elite">
-                                <option value="" disabled selected>Cuenta</option>
-                                ${config.metodos.map(met => `<option class="bg-slate-900" value="${met}">${met}</option>`).join('')}
-                            </select>
-                        </div>
-                        
-                        <input type="text" id="desc" placeholder="Descripción (opcional)" class="input-elite">
-
-                        <div class="flex gap-4 pt-2">
-                            <button onclick="tipoActual='gasto'; registrar()" class="flex-1 gold-bg text-slate-900 py-4 rounded-2xl font-bold uppercase text-[10px] shadow-lg active:scale-95 transition">Gasto</button>
-                            <button onclick="tipoActual='ingreso'; registrar()" class="flex-1 bg-white text-slate-900 py-4 rounded-2xl font-bold uppercase text-[10px] shadow-lg active:scale-95 transition">Ingreso</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function renderMetas(c) {
             c.innerHTML = `
                 <div class="p-8 animate-up">
-                    <h1 class="text-2xl font-extrabold mb-8">🎯 Mis Metas</h1>
-                    <div class="card-white mb-8 space-y-4">
-                        <input type="text" id="meta_nombre" placeholder="¿Qué quieres lograr?" class="w-full p-4 bg-slate-50 rounded-xl text-slate-900 font-bold outline-none border border-slate-100">
-                        <input type="number" id="meta_monto" placeholder="Monto objetivo $" class="w-full p-4 bg-slate-50 rounded-xl text-slate-900 font-bold outline-none border border-slate-100">
-                        <input type="date" id="meta_fecha" class="w-full p-4 bg-slate-50 rounded-xl text-slate-900 font-bold outline-none border border-slate-100">
-                        <button onclick="agregarMeta()" class="w-full gold-bg text-slate-900 py-4 rounded-xl font-bold uppercase tracking-widest text-xs">Crear Objetivo</button>
+                    <h1 class="text-2xl font-extrabold text-slate-800 mb-8">🎯 Objetivos de Vida</h1>
+                    <div class="bg-white p-6 rounded-[35px] shadow-xl border border-slate-100 space-y-4 mb-8">
+                        <input type="text" id="meta_nombre" placeholder="Nombre (ej. Tokyo)" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none">
+                        <input type="number" id="meta_monto" placeholder="Monto total $" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none">
+                        <input type="date" id="meta_fecha" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none">
+                        <button onclick="agregarMeta()" class="w-full gradient-premium text-white py-4 rounded-2xl font-bold uppercase tracking-widest">Crear Meta</button>
                     </div>
                     <div class="space-y-4">
-                        ${config.metas.length === 0 ? '<p class="text-center text-slate-500 text-sm">No has definido metas aún.</p>' : ''}
                         ${config.metas.map((m, i) => `
-                            <div class="card-white">
-                                <h4 class="font-extrabold text-slate-800 text-lg mb-2">${m.nombre}</h4>
-                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div class="h-full gold-bg" style="width: 30%"></div>
-                                </div>
-                                <p class="text-[10px] text-slate-400 mt-2 font-bold uppercase">Objetivo: $${parseFloat(m.monto).toLocaleString()} • ${m.fecha}</p>
-                                <button onclick="borrarMeta(${i})" class="mt-4 text-red-500 text-[10px] font-bold uppercase">Eliminar</button>
+                            <div class="bg-white p-6 rounded-[30px] border border-slate-100 shadow-sm">
+                                <h4 class="font-extrabold text-slate-800 text-lg">${m.nombre}</h4>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-4">Meta: $${parseFloat(m.monto).toLocaleString()}</p>
+                                ${renderMetaCals(m)}
+                                <button onclick="borrarMeta(${i})" class="mt-4 text-red-400 text-[10px] font-bold uppercase">Eliminar Meta</button>
                             </div>
                         `).join('')}
                     </div>
@@ -140,80 +175,88 @@
         function renderConfig(c) {
             c.innerHTML = `
                 <div class="p-8 animate-up">
-                    <h1 class="text-2xl font-extrabold mb-8 text-white tracking-tight">⚙️ Ajustes</h1>
-                    <div class="card-white space-y-8">
+                    <h1 class="text-2xl font-extrabold text-slate-800 mb-8">⚙️ Ajustes</h1>
+                    <div class="bg-white p-7 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Titular</label>
-                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-2 p-3 bg-slate-50 rounded-xl font-bold outline-none border border-slate-100">
+                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-3 p-4 bg-slate-50 rounded-2xl font-bold outline-none">
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cuentas</label>
-                            <div class="flex gap-2 mt-2">
-                                <input type="text" id="newCard" placeholder="Ej: Amex" class="flex-1 p-3 bg-slate-50 rounded-xl text-xs outline-none font-bold border border-slate-100">
-                                <button onclick="addItem('metodos', 'newCard')" class="gold-bg text-slate-900 px-4 rounded-xl font-bold">+</button>
+                            <div class="flex gap-2 mt-3 mb-4">
+                                <input type="text" id="newCard" placeholder="Nueva..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-xs outline-none font-bold">
+                                <button onclick="addItem('metodos', 'newCard')" class="gradient-premium text-white px-6 rounded-2xl font-bold">+</button>
                             </div>
-                            <div class="flex flex-wrap gap-2 mt-3">
+                            <div class="flex flex-wrap gap-2">
                                 ${config.metodos.map((m, i) => `<span class="bg-slate-100 text-[9px] font-bold px-3 py-2 rounded-lg">${m} <button onclick="removeItem('metodos', ${i})" class="text-red-400 ml-1">×</button></span>`).join('')}
                             </div>
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categorías</label>
-                            <div class="flex gap-2 mt-2">
-                                <input type="text" id="newCat" placeholder="Ej: Gym" class="flex-1 p-3 bg-slate-50 rounded-xl text-xs outline-none font-bold border border-slate-100">
-                                <button onclick="addItem('categorias', 'newCat')" class="gold-bg text-slate-900 px-4 rounded-xl font-bold">+</button>
+                            <div class="flex gap-2 mt-3 mb-4">
+                                <input type="text" id="newCat" placeholder="Nueva..." class="flex-1 p-4 bg-slate-50 rounded-2xl text-xs outline-none font-bold">
+                                <button onclick="addItem('categorias', 'newCat')" class="gradient-premium text-white px-6 rounded-2xl font-bold">+</button>
                             </div>
-                            <div class="flex flex-wrap gap-2 mt-3">
+                            <div class="flex flex-wrap gap-2">
                                 ${config.categorias.map((c, i) => `<span class="bg-slate-100 text-[9px] font-bold px-3 py-2 rounded-lg">${c} <button onclick="removeItem('categorias', ${i})" class="text-red-400 ml-1">×</button></span>`).join('')}
                             </div>
                         </div>
-                        <button onclick="resetApp()" class="w-full text-red-500 text-[10px] font-bold uppercase pt-4 border-t">Borrar Todos los Datos</button>
+                        <button onclick="resetApp()" class="w-full text-slate-300 text-[9px] font-bold uppercase pt-4">Reiniciar App</button>
                     </div>
                 </div>`;
         }
 
         // --- LÓGICA ---
+        function renderMetaCals(m) {
+            const dias = Math.ceil((new Date(m.fecha) - new Date()) / (1000 * 60 * 60 * 24));
+            if(dias <= 0) return `<p class="text-red-500 font-bold text-[10px]">FECHA ALCANZADA</p>`;
+            return `
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <p class="text-[8px] font-bold text-slate-400 uppercase">Diario</p>
+                        <p class="text-xs font-extrabold text-slate-800">$${(m.monto/dias).toFixed(0)}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <p class="text-[8px] font-bold text-slate-400 uppercase">Mensual</p>
+                        <p class="text-xs font-extrabold text-slate-800">$${(m.monto/(dias/30)).toFixed(0)}</p>
+                    </div>
+                </div>`;
+        }
+
         function calcularStats() {
+            let total = 0, ingresosMes = 0, gastosMes = 0;
             let porCuenta = {};
+            const hoy = new Date();
             movimientos.forEach(m => {
-                if (m.tipo === 'gasto') {
-                    if (!porCuenta[m.metodo]) porCuenta[m.metodo] = 0;
-                    porCuenta[m.metodo] += parseFloat(m.monto);
+                const monto = parseFloat(m.monto);
+                const fechaM = new Date(m.fecha);
+                if (m.tipo === 'ingreso') total += monto; else total -= monto;
+                if (!porCuenta[m.metodo]) porCuenta[m.metodo] = 0;
+                if (m.tipo === 'gasto') porCuenta[m.metodo] += monto;
+                if (fechaM.getMonth() === hoy.getMonth()) {
+                    if (m.tipo === 'ingreso') ingresosMes += monto; else gastosMes += monto;
                 }
             });
-            return { porCuenta };
+            let perc = ingresosMes > 0 ? (gastosMes / ingresosMes) * 100 : 0;
+            return { totalBalance: total, porCuenta, porcentajeGastado: Math.min(perc, 100), alertaClase: perc > 90 ? 'bg-red-500' : 'gold-bg', mensajeAlerta: perc > 90 ? 'Gasto elevado' : 'Salud Financiera' };
         }
 
         function registrar() {
-            const m = document.getElementById('monto').value;
-            const met = document.getElementById('metodo').value;
-            const cat = document.getElementById('cat').value;
-            if(!m || !met || !cat) return alert('Por favor llena monto, categoría y cuenta');
-            movimientos.unshift({ monto: m, tipo: tipoActual, desc: document.getElementById('desc').value, cat: cat, metodo: met, fecha: new Date().toISOString() });
-            save(); render();
+            const monto = document.getElementById('monto').value;
+            if(!monto || monto <= 0) return;
+            movimientos.unshift({ monto, tipo: tipoActual, desc: document.getElementById('desc').value, cat: document.getElementById('cat').value, metodo: document.getElementById('metodo').value, fecha: new Date().toISOString() });
+            saveConfig(); render();
         }
 
-        function addItem(key, id) {
-            const v = document.getElementById(id).value.trim();
-            if(v) { config[key].push(v); save(); render(); }
-        }
-
-        function removeItem(key, i) {
-            config[key].splice(i, 1);
-            save(); render();
-        }
-
-        function agregarMeta() {
-            const n = document.getElementById('meta_nombre').value;
-            const m = document.getElementById('meta_monto').value;
-            const f = document.getElementById('meta_fecha').value;
-            if(n && m && f) { config.metas.push({nombre:n, monto:m, fecha:f}); save(); vistaActual='home'; render(); }
-        }
-
-        function updateNombre(v) { config.nombre = v; save(); }
-        function save() { localStorage.setItem('elite_vFinal_config', JSON.stringify(config)); localStorage.setItem('elite_vFinal_movs', JSON.stringify(movimientos)); }
+        function addItem(key, id) { const v = document.getElementById(id).value.trim(); if(v) { config[key].push(v); saveConfig(); render(); } }
+        function removeItem(key, i) { config[key].splice(i, 1); saveConfig(); render(); }
+        function agregarMeta() { const n = document.getElementById('meta_nombre').value, m = document.getElementById('meta_monto').value, f = document.getElementById('meta_fecha').value; if(n && m && f) { config.metas.push({nombre:n, monto:m, fecha:f}); saveConfig(); vistaActual='home'; render(); } }
         function cambiarVista(v) { vistaActual = v; render(); }
-        function borrarMeta(i) { config.metas.splice(i,1); save(); render(); }
-        function resetApp() { if(confirm('¿Borrar todo?')) { localStorage.clear(); location.reload(); } }
+        function updateNombre(v) { config.nombre = v; saveConfig(); }
+        function saveConfig() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
+        function borrar(i) { movimientos.splice(i,1); saveConfig(); render(); }
+        function borrarMeta(i) { config.metas.splice(i,1); saveConfig(); render(); }
+        function resetApp() { localStorage.clear(); location.reload(); }
 
         render();
     </script>
