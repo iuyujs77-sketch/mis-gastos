@@ -20,7 +20,8 @@
         nav { background-color: #0b141e; border-top: 1px solid rgba(255,255,255,0.1); }
         .tab-active { border-bottom: 2px solid #d4af37; color: #d4af37; }
         select option { background-color: #0b141e; color: white; }
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
     </style>
 </head>
 <body class="pb-28">
@@ -50,7 +51,7 @@
             nombre: "Usuario",
             metodos: ['Efectivo', 'Amex', 'BBVA Débito'],
             categorias: ['Comida', 'Súper', 'Gasolina', 'Gym'],
-            conceptosIngreso: ['Nómina', 'Bono', 'Venta'],
+            conceptosIngreso: ['Nómina', 'Bono'],
             metas: []
         };
         let movimientos = JSON.parse(localStorage.getItem('e360_movs')) || [];
@@ -69,16 +70,15 @@
         function renderHome(c) {
             const stats = calcularGlobal();
             c.innerHTML = `
-                <div class="pt-10 px-8 mb-8 animate-up">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 rounded-full border border-gold-text/50 flex items-center justify-center bg-slate-800 font-bold gold-text text-xl">F</div>
+                <div class="pt-10 px-8 mb-12 animate-up"> <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded-full border border-gold-text/50 flex items-center justify-center bg-slate-800 font-bold gold-text text-xl shadow-lg">F</div>
                         <p class="text-[10px] font-bold gold-text uppercase">Finance Élite • ${config.nombre}</p>
                     </div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Balance General</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Balance General</p>
                     <h2 class="text-5xl font-extrabold text-white tracking-tighter mb-4">$${stats.totalBalance.toLocaleString()}</h2>
                 </div>
 
-                <div class="max-w-md mx-auto px-5 -mt-10 space-y-8 animate-up">
+                <div class="max-w-md mx-auto px-5 space-y-8 animate-up">
                     <div class="overflow-x-auto no-scrollbar flex gap-4">
                         ${config.metodos.map(m => {
                             const isCredit = m.toLowerCase().includes('amex') || m.toLowerCase().includes('crédito');
@@ -117,10 +117,34 @@
                             <input type="datetime-local" id="fecha_mov" class="input-premium border-none pt-1">
                         </div>
                         <input type="text" id="desc" placeholder="Descripción" class="input-premium">
-                        <button onclick="registrar()" class="w-full gold-bg text-slate-900 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] mt-4 shadow-lg active:scale-95 transition">Registrar Movimiento</button>
+                        <button onclick="registrar()" class="w-full gold-bg text-slate-900 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] mt-4 shadow-lg active:scale-95 transition">Registrar</button>
                     </div>
                 </div>`;
             document.getElementById('fecha_mov').value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        }
+
+        function renderMetas(c) {
+            c.innerHTML = `
+                <div class="p-8 animate-up">
+                    <h1 class="text-2xl font-extrabold text-white mb-8 tracking-tight uppercase text-center">Metas</h1>
+                    <div class="card-white mb-8 space-y-4">
+                        <input type="text" id="meta_nombre" placeholder="Nombre (ej. Tokyo)" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900">
+                        <input type="number" id="meta_monto" placeholder="Monto objetivo $" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900">
+                        
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-2">Fecha límite para cumplirla</label>
+                            <input type="date" id="meta_fecha" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 mt-1">
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="agregarMeta('ahorro')" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold uppercase text-[9px]">Crear Ahorro ✈️</button>
+                            <button onclick="agregarMeta('deuda')" class="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold uppercase text-[9px]">Crear Deuda 📉</button>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        ${config.metas.map((m, i) => `<div class="card-white mb-4 border-l-4 ${m.tipo==='deuda'?'border-red-500':'border-gold-bg'}"><h4 class="font-extrabold text-slate-800">${m.nombre}</h4><p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Monto: $${parseFloat(m.monto).toLocaleString()} • ${m.fecha}</p><button onclick="borrarMeta(${i})" class="text-red-500 text-[8px] font-bold uppercase mt-2">Eliminar</button></div>`).join('')}
+                    </div>
+                </div>`;
         }
 
         function renderCorte(c) {
@@ -134,13 +158,13 @@
                         <button onclick="subVistaCorte='mes'; render();" class="pb-3 text-xs font-bold uppercase ${subVistaCorte === 'mes' ? 'tab-active' : 'opacity-40'}">Mes</button>
                     </div>
                     <div class="space-y-6">
-                        <div class="card-white text-center">
+                        <div class="card-white text-center shadow-2xl">
                             <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Neto (${subVistaCorte})</p>
                             <h3 class="text-4xl font-extrabold ${data.neto >= 0 ? 'text-green-600' : 'text-red-600'}">$${data.neto.toLocaleString()}</h3>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="card-dark border-l-4 border-green-500"><p class="text-[8px] text-slate-500 font-bold uppercase">Entradas</p><p class="text-xl font-extrabold">$${data.ingresos.toLocaleString()}</p></div>
-                            <div class="card-dark border-l-4 border-red-500"><p class="text-[8px] text-slate-500 font-bold uppercase">Salidas</p><p class="text-xl font-extrabold">$${data.gastos.toLocaleString()}</p></div>
+                            <div class="card-dark border-l-4 border-green-500"><p class="text-[8px] text-slate-500 font-bold uppercase">Ingresos</p><p class="text-xl font-extrabold">$${data.ingresos.toLocaleString()}</p></div>
+                            <div class="card-dark border-l-4 border-red-500"><p class="text-[8px] text-slate-500 font-bold uppercase">Gastos</p><p class="text-xl font-extrabold">$${data.gastos.toLocaleString()}</p></div>
                         </div>
                     </div>
                 </div>`;
@@ -149,11 +173,11 @@
         function renderConfig(c) {
             c.innerHTML = `
                 <div class="p-8 animate-up">
-                    <h1 class="text-2xl font-extrabold text-white mb-8 tracking-tight">⚙️ Ajustes</h1>
+                    <h1 class="text-2xl font-extrabold text-white mb-8 tracking-tight uppercase text-center">Ajustes</h1>
                     <div class="card-white space-y-8">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-slate-500">Nombre del Titular</label>
-                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-2 p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900">
+                            <input type="text" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-2 p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 border">
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-slate-500">Mis Cuentas / Tarjetas</label>
@@ -180,41 +204,22 @@
                 </div>`;
         }
 
-        // --- LÓGICA ---
+        // --- LÓGICA RESTANTE (IDÉNTICA) ---
         function registrar() {
             const m = document.getElementById('monto').value, met = document.getElementById('metodo').value, cat = document.getElementById('cat').value, fecha = document.getElementById('fecha_mov').value;
-            if(!m || !met || !cat) return alert('Completa los campos obligatorios');
+            if(!m || !met || !cat) return alert('Completa los campos');
             movimientos.unshift({ monto: m, tipo: tipoActual, cat: cat, metodo: met, desc: document.getElementById('desc').value, fecha: fecha });
             saveConfig(); render();
         }
-        function calcularGlobal() {
-            let total = 0, inC = {}, outC = {};
-            movimientos.forEach(m => {
-                const monto = parseFloat(m.monto), isCredit = m.metodo.toLowerCase().includes('amex') || m.metodo.toLowerCase().includes('crédito');
-                if (m.tipo === 'ingreso') { if (!isCredit) total += monto; inC[m.metodo] = (inC[m.metodo] || 0) + monto; }
-                else { if (!isCredit) total -= monto; outC[m.metodo] = (outC[m.metodo] || 0) + monto; }
-            });
-            return { totalBalance: total, ingresosPorCuenta: inC, gastosPorCuenta: outC };
-        }
-        function calcularCorte(periodo) {
-            let ingresos = 0, gastos = 0; const ahora = new Date();
-            movimientos.forEach(m => {
-                const fecha = new Date(m.fecha); let incl = false;
-                if (periodo === 'dia') incl = fecha.toDateString() === ahora.toDateString();
-                else if (periodo === 'semana') incl = (ahora - fecha) / 864e5 <= 7;
-                else incl = fecha.getMonth() === ahora.getMonth();
-                if (incl) { if (m.tipo === 'ingreso') ingresos += parseFloat(m.monto); else gastos += parseFloat(m.monto); }
-            });
-            return { ingresos, gastos, neto: ingresos - gastos };
-        }
+        function calcularGlobal() { let total = 0, inC = {}, outC = {}; movimientos.forEach(m => { const monto = parseFloat(m.monto), isCredit = m.metodo.toLowerCase().includes('amex') || m.metodo.toLowerCase().includes('crédito'); if (m.tipo === 'ingreso') { if (!isCredit) total += monto; inC[m.metodo] = (inC[m.metodo] || 0) + monto; } else { if (!isCredit) total -= monto; outC[m.metodo] = (outC[m.metodo] || 0) + monto; } }); return { totalBalance: total, ingresosPorCuenta: inC, gastosPorCuenta: outC }; }
+        function calcularCorte(p) { let i = 0, g = 0; const ah = new Date(); movimientos.forEach(m => { const f = new Date(m.fecha); let incl = false; if (p === 'dia') incl = f.toDateString() === ah.toDateString(); else if (p === 'semana') incl = (ah - f) / 864e5 <= 7; else incl = f.getMonth() === ah.getMonth(); if (incl) { if (m.tipo === 'ingreso') i += parseFloat(m.monto); else g += parseFloat(m.monto); } }); return { ingresos: i, gastos: g, neto: i - g }; }
         function saveConfig() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
         function cambiarVista(v) { vistaActual = v; render(); }
-        function addItem(key, id) { const v = document.getElementById(id).value.trim(); if(v) { config[key].push(v); saveConfig(); render(); } }
-        function removeItem(key, i) { config[key].splice(i, 1); saveConfig(); render(); }
+        function addItem(k, id) { const v = document.getElementById(id).value.trim(); if(v) { config[k].push(v); saveConfig(); render(); } }
+        function removeItem(k, i) { config[k].splice(i, 1); saveConfig(); render(); }
         function updateNombre(v) { config.nombre = v; saveConfig(); }
         function agregarMeta(tipo) { const n = document.getElementById('meta_nombre').value, m = document.getElementById('meta_monto').value, f = document.getElementById('meta_fecha').value; if(n && m && f) { config.metas.push({nombre:n, monto:m, fecha:f, tipo:tipo}); saveConfig(); vistaActual='home'; render(); } }
         function borrarMeta(i) { config.metas.splice(i,1); saveConfig(); render(); }
-        function renderMetas(c) { c.innerHTML = `<div class="p-8 animate-up"><h1 class="text-2xl font-extrabold text-white mb-8 tracking-tight uppercase text-center">Metas</h1><div class="card-white mb-8 space-y-4"><input type="text" id="meta_nombre" placeholder="Nombre" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900"><input type="number" id="meta_monto" placeholder="Monto $" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900"><input type="date" id="meta_fecha" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none text-slate-900"><div class="flex gap-2"><button onclick="agregarMeta('ahorro')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold uppercase text-[9px]">Ahorro</button><button onclick="agregarMeta('deuda')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold uppercase text-[9px]">Deuda</button></div></div>${config.metas.map((m, i) => `<div class="card-white mb-4 border-l-4 ${m.tipo==='deuda'?'border-red-500':'border-gold-bg'}"><h4 class="font-extrabold text-slate-800">${m.nombre}</h4><button onclick="borrarMeta(${i})" class="text-red-500 text-[8px] font-bold uppercase mt-2">Eliminar</button></div>`).join('')}</div>`; }
 
         render();
     </script>
