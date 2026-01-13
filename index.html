@@ -63,7 +63,10 @@
         let vistaActual = 'home';
         let tipoActual = 'gasto';
         let subVistaCorte = 'mes';
-        let fechaFiltroCorte = new Date().toISOString().split('T')[0];
+        // Obtener fecha local correcta para el filtro inicial
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        let fechaFiltroCorte = now.toISOString().slice(0, 10);
 
         function render() {
             const container = document.getElementById('app');
@@ -131,7 +134,11 @@
                         <button onclick="registrar()" class="w-full gold-bg text-slate-900 py-4 rounded-2xl font-bold uppercase text-[10px] shadow-lg">Confirmar</button>
                     </div>
                 </div>`;
-            document.getElementById('fecha_mov').value = new Date().toISOString().slice(0, 16);
+            
+            // CORRECCIÓN DE HORA AUTOMÁTICA
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('fecha_mov').value = now.toISOString().slice(0, 16);
         }
 
         function renderCorte(c) {
@@ -209,7 +216,7 @@
                             <div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Nueva Cuenta</p>
                                 <div class="flex gap-2">
-                                    <input type="text" id="newCta" placeholder="Nombre (ej. BBVA)" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
+                                    <input type="text" id="newCta" placeholder="Ej: BBVA" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
                                     <select id="ctaTipo" class="p-3 bg-slate-100 rounded-lg text-xs font-bold text-slate-900 outline-none">
                                         <option value="debito">Débito</option>
                                         <option value="credito">Crédito</option>
@@ -251,10 +258,10 @@
                         <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-2 tracking-widest">Automatización</h3>
                         <div class="card-white">
                             <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Suscripciones Recurrentes</p>
-                            <div class="flex gap-2 mb-2">
-                                <input type="text" id="recNom" placeholder="Ej: Netflix" class="flex-[2] p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none">
-                                <input type="number" id="recMon" placeholder="$" class="flex-1 p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none">
-                                <input type="number" id="recDia" placeholder="Día" min="1" max="31" class="w-12 p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none text-center">
+                            <div class="grid grid-cols-4 gap-2 mb-2">
+                                <input type="text" id="recNom" placeholder="Nombre" class="col-span-2 p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none">
+                                <input type="number" id="recMon" placeholder="$" class="col-span-1 p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none">
+                                <input type="number" id="recDia" placeholder="Día" min="1" max="31" class="col-span-1 p-3 bg-slate-100 rounded-lg text-xs font-bold outline-none text-center">
                             </div>
                             <select id="recCta" class="w-full p-3 bg-slate-100 rounded-lg text-xs font-bold mb-3 outline-none text-slate-700">${config.metodos.map(m=>`<option value="${m.nombre}">${m.nombre}</option>`)}</select>
                             <button onclick="addRecurrente()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-[10px] uppercase">Guardar Suscripción</button>
@@ -294,18 +301,16 @@
             if(!confirm("¿Registrar todas las suscripciones de este mes?")) return;
             const hoy = new Date();
             const year = hoy.getFullYear();
-            const month = String(hoy.getMonth() + 1).padStart(2, '0'); // Mes actual numérico
+            const month = String(hoy.getMonth() + 1).padStart(2, '0');
             
             config.recurrentes.forEach(rec => {
-                // Crear fecha específica: Año Actual - Mes Actual - Día Configurado
-                // Si el día es menor a 10, le ponemos un 0 (ej: 05)
                 const diaFormato = String(rec.dia).padStart(2, '0');
                 const fechaGenerada = `${year}-${month}-${diaFormato}T12:00`; 
                 
                 movimientos.unshift({
                     monto: rec.monto,
                     tipo: 'gasto',
-                    cat: 'Recurrente', // O podrías usar una categoría específica
+                    cat: 'Recurrente',
                     metodo: rec.cuenta,
                     desc: `Cargo: ${rec.nombre}`,
                     fecha: fechaGenerada
@@ -336,14 +341,13 @@
 
         function calcularCorte(periodo, fechaRef) {
             let i = 0, g = 0; 
-            // CORRECCIÓN CRÍTICA: Comparar strings de fecha local, no objetos Date (que usan UTC)
             const refStr = fechaRef.slice(0, 10); 
             const refMesStr = fechaRef.slice(0, 7);
             const refDate = new Date(fechaRef);
 
             movimientos.forEach(m => {
-                const movStr = m.fecha.slice(0, 10); // YYYY-MM-DD
-                const movMesStr = m.fecha.slice(0, 7); // YYYY-MM
+                const movStr = m.fecha.slice(0, 10);
+                const movMesStr = m.fecha.slice(0, 7);
                 const movDate = new Date(m.fecha);
 
                 let match = false;
