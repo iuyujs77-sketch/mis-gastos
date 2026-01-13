@@ -190,6 +190,11 @@
                 <div class="p-8 animate-up">
                     <h1 class="text-2xl font-extrabold text-white mb-8 text-center uppercase">Ajustes</h1>
                     <div class="space-y-6">
+                        <div class="card-white">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre del Titular</label>
+                            <input type="text" id="titularNom" value="${config.nombre}" onchange="updateNombre(this.value)" class="w-full mt-2 p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 border text-sm">
+                        </div>
+
                         <div class="card-white space-y-4">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cuentas y Tarjetas</p>
                             <input type="text" id="newCta" placeholder="Nombre (ej. Banamex)" class="w-full p-3 bg-slate-50 rounded-lg outline-none text-sm border">
@@ -204,7 +209,7 @@
                         </div>
                         
                         <div class="card-white">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-4">Gastos Recurrentes (Suscripciones)</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-4">Gastos Recurrentes</p>
                             <input type="text" id="recNom" placeholder="Nombre (ej. Netflix)" class="w-full p-3 bg-slate-50 rounded-lg text-sm mb-2 border">
                             <input type="number" id="recMon" placeholder="Monto $" class="w-full p-3 bg-slate-50 rounded-lg text-sm mb-2 border">
                             <select id="recCta" class="w-full p-3 bg-slate-50 rounded-lg text-sm mb-4 border">${config.metodos.map(m=>`<option value="${m.nombre}">${m.nombre}</option>`)}</select>
@@ -219,12 +224,14 @@
                              </div>
                              <div class="flex flex-wrap gap-2">${config.categorias.map((c,i)=>`<span class="bg-slate-100 p-2 rounded-lg text-[9px] font-bold">${c} <button onclick="removeItem('categorias',${i})">×</button></span>`).join('')}</div>
                         </div>
-                        <button onclick="localStorage.clear(); location.reload();" class="w-full text-red-500 font-bold uppercase text-[10px] pt-4">Borrar Todo</button>
+                        <button onclick="if(confirm('¿Borrar todo?')){localStorage.clear();location.reload();}" class="w-full text-red-500 font-bold uppercase text-[10px] pt-4 border-t">Borrar todos los datos</button>
                     </div>
                 </div>`;
         }
 
-        // --- MOTOR ---
+        // --- FUNCIONES ---
+        function updateNombre(v) { config.nombre = v; save(); render(); }
+
         function registrar() {
             const m = document.getElementById('monto').value;
             const fecha = document.getElementById('fecha_mov').value;
@@ -253,10 +260,10 @@
                 
                 if(mov.tipo === 'ingreso') {
                     if(cta.tipo === 'debito') { total += monto; porMetodo[mov.metodo] += monto; }
-                    else porMetodo[mov.metodo] -= monto; // Abono a deuda crédito
+                    else porMetodo[mov.metodo] -= monto;
                 } else {
                     if(cta.tipo === 'debito') { total -= monto; porMetodo[mov.metodo] -= monto; }
-                    else porMetodo[mov.metodo] += monto; // Aumento deuda crédito
+                    else porMetodo[mov.metodo] += monto;
                 }
             });
             return { totalBalance: total, porMetodo };
