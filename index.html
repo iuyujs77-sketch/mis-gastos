@@ -22,23 +22,24 @@
         }
     </script>
     <style>
-        * { box-sizing: border-box; }
-        body { background-color: #050b14; color: #e2e8f0; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #050b14; color: #e2e8f0; overscroll-behavior-y: none; }
         
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .glass-high { background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .glass-nav { background: rgba(5, 11, 20, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
         
+        /* Inputs mejorados con más padding lateral */
         .input-box { 
             background: rgba(255,255,255,0.03); 
             border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 12px; 
-            padding: 12px; 
+            border-radius: 14px; 
+            padding: 14px 16px; /* Más espacio lateral */
             width: 100%; 
             color: white; 
             outline: none; 
             transition: 0.3s;
-            font-size: 14px; 
+            font-size: 15px; 
         }
         .input-box:focus { border-color: rgba(212, 175, 55, 0.5); background: rgba(255,255,255,0.05); }
 
@@ -46,18 +47,22 @@
         .animate-up { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        input[type="date"], input[type="month"], input[type="datetime-local"] { color-scheme: dark; width: 100%; display: block; }
+        /* Fechas oscuras y con margen interno seguro */
+        input[type="date"], input[type="month"], input[type="datetime-local"] { 
+            color-scheme: dark; 
+            width: 100%; 
+            display: block;
+            padding-right: 16px; /* Evita que el icono se pegue */
+        }
         
-        /* Efecto de brillo para el tab activo */
-        .nav-active { color: #d4af37; opacity: 1; transform: scale(1.1); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
-        .nav-inactive { color: #94a3b8; opacity: 0.6; }
+        .nav-active { color: #d4af37; opacity: 1; transform: scale(1.1); text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .nav-inactive { color: #64748b; opacity: 0.7; }
     </style>
 </head>
 <body class="pb-32 bg-dark-grad min-h-screen text-sm">
     <div id="app" class="max-w-md mx-auto relative min-h-screen"></div>
 
-    <nav id="main-nav" class="fixed bottom-0 left-0 right-0 px-6 py-4 pb-8 flex justify-around items-center z-50 glass-nav max-w-md mx-auto">
-        </nav>
+    <nav id="main-nav" class="fixed bottom-0 left-0 right-0 px-6 py-4 pb-8 flex justify-around items-center z-50 glass-nav max-w-md mx-auto"></nav>
 
     <script>
         // --- ESTADO ---
@@ -84,13 +89,10 @@
 
         function render() {
             const container = document.getElementById('app');
-            // Renderizado de vistas
             if (vistaActual === 'corte') renderCorte(container);
             else if (vistaActual === 'metas') renderMetas(container);
             else if (vistaActual === 'config') renderConfig(container);
             else renderHome(container);
-            
-            // Renderizado de Navegación (Active State)
             renderNav();
         }
 
@@ -102,19 +104,13 @@
                 { id: 'metas', icon: '🎯', label: 'Metas' },
                 { id: 'config', icon: '⚙️', label: 'Ajustes' }
             ];
-
             nav.innerHTML = items.map((item, index) => {
                 const isActive = vistaActual === item.id;
-                const baseClass = "flex flex-col items-center gap-1.5 transition-all duration-300";
-                const stateClass = isActive ? "nav-active" : "nav-inactive";
-                
-                // Separador vertical visual entre items (opcional, estilo Titanium)
-                let html = `<button onclick="cambiarVista('${item.id}')" class="${baseClass} ${stateClass}">
+                let html = `<button onclick="cambiarVista('${item.id}')" class="flex flex-col items-center gap-1.5 transition-all duration-300 ${isActive ? 'nav-active' : 'nav-inactive'}">
                     <span class="text-2xl">${item.icon}</span>
                     <span class="text-[9px] font-bold uppercase tracking-widest">${item.label}</span>
                 </button>`;
-                
-                if (index === 1) html += `<div class="w-px h-8 bg-white/10 mx-2"></div>`; // Separador central
+                if (index === 1) html += `<div class="w-px h-8 bg-white/10 mx-2"></div>`;
                 return html;
             }).join('');
         }
@@ -132,7 +128,7 @@
                         </div>
                     </div>
                     <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Patrimonio Neto (Real)</p>
-                    <h2 class="text-5xl font-extrabold text-white tracking-tighter mb-4">$${stats.totalBalance.toLocaleString()}</h2>
+                    <h2 class="text-6xl font-extrabold text-white tracking-tighter mb-4">$${stats.totalBalance.toLocaleString()}</h2>
                 </div>
 
                 <div class="px-6 space-y-8 animate-up">
@@ -202,13 +198,13 @@
                             `}
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="space-y-4 mb-6">
                             <div class="space-y-1">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Fecha</label>
+                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Fecha y Hora</label>
                                 <input type="datetime-local" id="fecha_mov" class="input-box bg-deep text-xs">
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Nota</label>
+                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Nota / Descripción</label>
                                 <input type="text" id="desc" placeholder="Opcional..." class="input-box bg-deep text-xs">
                             </div>
                         </div>
@@ -238,7 +234,7 @@
 
                     <div class="mb-2 w-full">
                         <label class="text-[9px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Periodo de Análisis</label>
-                        <div class="w-full pr-1">
+                        <div class="w-full">
                             <input type="${subVistaCorte==='mes'?'month':'date'}" value="${fechaFiltroCorte.slice(0, subVistaCorte==='mes'?7:10)}" 
                                    onchange="fechaFiltroCorte=this.value; render();" class="input-box bg-deep text-center font-bold text-lg border-white/10 w-full">
                         </div>
@@ -318,93 +314,10 @@
             c.innerHTML = `
                 <div class="pt-14 px-6 animate-up pb-32">
                     <h1 class="text-2xl font-bold text-white mb-8 text-center uppercase tracking-widest">Configuración</h1>
-                    
-                    <div class="mb-10">
-                        <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Identidad</h3>
-                        <div class="glass p-4 rounded-2xl">
-                            <label class="text-[9px] font-bold text-slate-400 uppercase block mb-2">Titular</label>
-                            <input type="text" id="titularNom" value="${config.nombre}" onchange="updateNombre(this.value)" class="input-box bg-deep font-bold">
-                        </div>
-                    </div>
-
-                    <div class="mb-10">
-                        <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Cartera & Activos</h3>
-                        <div class="glass p-5 rounded-3xl space-y-5">
-                            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-                                <p class="text-[9px] font-bold text-white uppercase mb-3 text-center">Añadir Nueva Cuenta</p>
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="newCta" placeholder="Nombre" class="input-box bg-deep text-xs">
-                                        <select id="ctaTipo" class="input-box bg-deep text-xs">
-                                            <option value="debito">Débito</option>
-                                            <option value="credito">Crédito</option>
-                                        </select>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <input type="number" id="ctaInicial" placeholder="Saldo Inicial $" class="input-box bg-deep text-xs flex-1">
-                                        <button onclick="addItemMetodo()" class="bg-white text-black px-5 rounded-xl font-bold uppercase text-[10px] hover:bg-gray-200">Crear</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-2">
-                                ${config.metodos.map((m, i) => `
-                                    <div class="flex justify-between items-center bg-deep p-3 rounded-xl border border-white/5">
-                                        <div>
-                                            <p class="text-xs font-bold text-white">${m.nombre} <span class="text-[9px] text-slate-500 ml-1">(${m.tipo === 'credito' ? 'CR' : 'DB'})</span></p>
-                                            <p class="text-[9px] text-gold/80">Inicial: $${parseFloat(m.inicial || 0).toLocaleString()}</p>
-                                        </div>
-                                        <div class="flex gap-3">
-                                            <button onclick="editarCuenta(${i})" class="text-[9px] font-bold text-slate-300 uppercase">Editar</button>
-                                            <button onclick="removeItem('metodos',${i})" class="text-[9px] font-bold text-red-500 uppercase">×</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-10">
-                        <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Conceptos</h3>
-                        <div class="glass p-5 rounded-3xl mb-4">
-                            <p class="text-[9px] font-bold text-emerald-400 uppercase mb-3">Fuentes de Ingreso</p>
-                            <div class="flex gap-2 mb-4">
-                                <input type="text" id="newIngreso" placeholder="Ej: Freelance" class="input-box bg-deep text-xs">
-                                <button onclick="addItem('conceptosIngreso', 'newIngreso')" class="bg-emerald-500/20 text-emerald-400 px-4 rounded-xl font-bold border border-emerald-500/20">+</button>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                ${config.conceptosIngreso.map((c,i)=>`<span class="bg-emerald-500/10 text-emerald-300 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-emerald-500/10 flex items-center gap-2">${c} <button onclick="removeItem('conceptosIngreso',${i})">×</button></span>`).join('')}
-                            </div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl">
-                            <p class="text-[9px] font-bold text-red-400 uppercase mb-3">Categorías de Gasto</p>
-                            <div class="flex gap-2 mb-4">
-                                <input type="text" id="newCat" placeholder="Ej: Renta" class="input-box bg-deep text-xs">
-                                <button onclick="addItem('categorias', 'newCat')" class="bg-red-500/20 text-red-400 px-4 rounded-xl font-bold border border-red-500/20">+</button>
-                            </div>
-                            <div class="flex flex-wrap gap-2">
-                                ${config.categorias.map((c,i)=>`<span class="bg-red-500/10 text-red-300 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-red-500/10 flex items-center gap-2">${c} <button onclick="removeItem('categorias',${i})">×</button></span>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-10">
-                        <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Recurrentes</h3>
-                        <div class="glass p-5 rounded-3xl">
-                            <div class="grid grid-cols-4 gap-2 mb-2">
-                                <input type="text" id="recNom" placeholder="Netflix" class="col-span-2 input-box bg-deep text-xs">
-                                <input type="number" id="recMon" placeholder="$" class="col-span-1 input-box bg-deep text-xs">
-                                <input type="number" id="recDia" placeholder="Día" min="1" max="31" class="col-span-1 input-box bg-deep text-xs text-center">
-                            </div>
-                            <select id="recCta" class="w-full input-box bg-deep text-xs mb-3">${config.metodos.map(m=>`<option value="${m.nombre}">${m.nombre}</option>`)}</select>
-                            <button onclick="addRecurrente()" class="w-full bg-white text-black py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-200">Guardar Suscripción</button>
-                            
-                            <div class="mt-4 space-y-2">
-                                ${config.recurrentes.map((r, i) => `<div class="flex justify-between items-center bg-deep p-3 rounded-xl border border-white/5"><span class="text-[10px] font-bold text-slate-300">📅 Día ${r.dia} • ${r.nombre} ($${r.monto})</span><button onclick="removeItem('recurrentes',${i})" class="text-red-400 text-xs font-bold px-2">×</button></div>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-
+                    <div class="mb-10"><h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Identidad</h3><div class="glass p-4 rounded-2xl"><label class="text-[9px] font-bold text-slate-400 uppercase block mb-2">Titular</label><input type="text" id="titularNom" value="${config.nombre}" onchange="updateNombre(this.value)" class="input-box bg-deep font-bold"></div></div>
+                    <div class="mb-10"><h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Cartera & Activos</h3><div class="glass p-5 rounded-3xl space-y-5"><div class="bg-white/5 p-4 rounded-xl border border-white/5"><p class="text-[9px] font-bold text-white uppercase mb-3 text-center">Añadir Nueva Cuenta</p><div class="space-y-3"><div class="grid grid-cols-2 gap-2"><input type="text" id="newCta" placeholder="Nombre" class="input-box bg-deep text-xs"><select id="ctaTipo" class="input-box bg-deep text-xs"><option value="debito">Débito</option><option value="credito">Crédito</option></select></div><div class="flex gap-2"><input type="number" id="ctaInicial" placeholder="Saldo Inicial $" class="input-box bg-deep text-xs flex-1"><button onclick="addItemMetodo()" class="bg-white text-black px-5 rounded-xl font-bold uppercase text-[10px] hover:bg-gray-200">Crear</button></div></div></div><div class="space-y-2">${config.metodos.map((m, i) => `<div class="flex justify-between items-center bg-deep p-3 rounded-xl border border-white/5"><div><p class="text-xs font-bold text-white">${m.nombre} <span class="text-[9px] text-slate-500 ml-1">(${m.tipo === 'credito' ? 'CR' : 'DB'})</span></p><p class="text-[9px] text-gold/80">Inicial: $${parseFloat(m.inicial || 0).toLocaleString()}</p></div><div class="flex gap-3"><button onclick="editarCuenta(${i})" class="text-[9px] font-bold text-slate-300 uppercase">Editar</button><button onclick="removeItem('metodos',${i})" class="text-[9px] font-bold text-red-500 uppercase">×</button></div></div>`).join('')}</div></div></div>
+                    <div class="mb-10"><h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Conceptos</h3><div class="glass p-5 rounded-3xl mb-4"><p class="text-[9px] font-bold text-emerald-400 uppercase mb-3">Fuentes de Ingreso</p><div class="flex gap-2 mb-4"><input type="text" id="newIngreso" placeholder="Ej: Freelance" class="input-box bg-deep text-xs"><button onclick="addItem('conceptosIngreso', 'newIngreso')" class="bg-emerald-500/20 text-emerald-400 px-4 rounded-xl font-bold border border-emerald-500/20">+</button></div><div class="flex flex-wrap gap-2">${config.conceptosIngreso.map((c,i)=>`<span class="bg-emerald-500/10 text-emerald-300 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-emerald-500/10 flex items-center gap-2">${c} <button onclick="removeItem('conceptosIngreso',${i})">×</button></span>`).join('')}</div></div><div class="glass p-5 rounded-3xl"><p class="text-[9px] font-bold text-red-400 uppercase mb-3">Categorías de Gasto</p><div class="flex gap-2 mb-4"><input type="text" id="newCat" placeholder="Ej: Renta" class="input-box bg-deep text-xs"><button onclick="addItem('categorias', 'newCat')" class="bg-red-500/20 text-red-400 px-4 rounded-xl font-bold border border-red-500/20">+</button></div><div class="flex flex-wrap gap-2">${config.categorias.map((c,i)=>`<span class="bg-red-500/10 text-red-300 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-red-500/10 flex items-center gap-2">${c} <button onclick="removeItem('categorias',${i})">×</button></span>`).join('')}</div></div></div>
+                    <div class="mb-10"><h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-2 tracking-widest">Recurrentes</h3><div class="glass p-5 rounded-3xl"><div class="grid grid-cols-4 gap-2 mb-2"><input type="text" id="recNom" placeholder="Netflix" class="col-span-2 input-box bg-deep text-xs"><input type="number" id="recMon" placeholder="$" class="col-span-1 input-box bg-deep text-xs"><input type="number" id="recDia" placeholder="Día" min="1" max="31" class="col-span-1 input-box bg-deep text-xs text-center"></div><select id="recCta" class="w-full input-box bg-deep text-xs mb-3">${config.metodos.map(m=>`<option value="${m.nombre}">${m.nombre}</option>`)}</select><button onclick="addRecurrente()" class="w-full bg-white text-black py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-200">Guardar Suscripción</button><div class="mt-4 space-y-2">${config.recurrentes.map((r, i) => `<div class="flex justify-between items-center bg-deep p-3 rounded-xl border border-white/5"><span class="text-[10px] font-bold text-slate-300">📅 Día ${r.dia} • ${r.nombre} ($${r.monto})</span><button onclick="removeItem('recurrentes',${i})" class="text-red-400 text-xs font-bold px-2">×</button></div>`).join('')}</div></div></div>
                     <button onclick="if(confirm('¿Borrar todo?')){localStorage.clear();location.reload();}" class="w-full text-red-500/50 font-bold uppercase text-[9px] pb-8 hover:text-red-500 transition-colors">⚠️ Restablecer Fábrica</button>
                 </div>`;
         }
@@ -465,14 +378,7 @@
             return { ingresos: i, gastos: g, neto: i - g, lista, rangoTexto };
         }
         function save() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
-        
-        // FUNCION MODIFICADA PARA SCROLL
-        function cambiarVista(v) { 
-            vistaActual = v; 
-            window.scrollTo(0,0); // Scroll al top
-            render(); 
-        }
-        
+        function cambiarVista(v) { vistaActual = v; window.scrollTo(0,0); render(); }
         function addItemMetodo() { const n = document.getElementById('newCta').value; const t = document.getElementById('ctaTipo').value; const init = document.getElementById('ctaInicial').value; if(n){ config.metodos.push({nombre:n, tipo:t, inicial: init || 0}); save(); render(); } }
         function addRecurrente() { const n = document.getElementById('recNom').value, m = document.getElementById('recMon').value, c = document.getElementById('recCta').value, d = document.getElementById('recDia').value; if(n && m && d){ config.recurrentes.push({nombre:n, monto:m, cuenta:c, dia:d}); save(); render(); } }
         function addItem(key, id) { const v = document.getElementById(id).value; if(v){ config[key].push(v); save(); render(); } }
