@@ -63,10 +63,7 @@
         let vistaActual = 'home';
         let tipoActual = 'gasto';
         let subVistaCorte = 'mes';
-        // Obtener fecha local correcta para el filtro inicial
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        let fechaFiltroCorte = now.toISOString().slice(0, 10);
+        let fechaFiltroCorte = new Date().toISOString().split('T')[0];
 
         function render() {
             const container = document.getElementById('app');
@@ -135,7 +132,6 @@
                     </div>
                 </div>`;
             
-            // CORRECCIÓN DE HORA AUTOMÁTICA
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('fecha_mov').value = now.toISOString().slice(0, 16);
@@ -144,7 +140,7 @@
         function renderCorte(c) {
             const data = calcularCorte(subVistaCorte, fechaFiltroCorte);
             c.innerHTML = `
-                <div class="p-8 animate-up">
+                <div class="p-8 animate-up pb-32">
                     <h1 class="text-2xl font-extrabold text-white mb-6 uppercase text-center">Auditoría</h1>
                     <div class="flex justify-between border-b border-white/10 mb-6 px-2">
                         <button onclick="subVistaCorte='dia'; render();" class="pb-3 text-xs font-bold uppercase ${subVistaCorte === 'dia' ? 'tab-active' : 'opacity-40'}">Día</button>
@@ -158,7 +154,7 @@
                                onchange="fechaFiltroCorte=this.value; render();" class="w-full bg-white/5 p-4 rounded-xl mt-1 text-sm outline-none border border-white/10">
                     </div>
 
-                    <div class="space-y-6 text-center">
+                    <div class="space-y-6 mb-8 text-center">
                         <div class="card-white">
                             <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Balance Periodo</p>
                             <h3 class="text-4xl font-extrabold ${data.neto >= 0 ? 'text-green-600' : 'text-red-600'}">$${data.neto.toLocaleString()}</h3>
@@ -166,6 +162,25 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="card-dark border-l-4 border-green-500"><p class="text-[8px] text-slate-500 uppercase">Ingresos</p><p class="text-xl font-bold">$${data.ingresos.toLocaleString()}</p></div>
                             <div class="card-dark border-l-4 border-red-500"><p class="text-[8px] text-slate-500 uppercase">Gastos</p><p class="text-xl font-bold">$${data.gastos.toLocaleString()}</p></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Detalle de Cargos</h3>
+                        <div class="space-y-3">
+                            ${data.lista.length === 0 ? '<p class="text-xs text-slate-600 text-center italic">No hay movimientos en este periodo</p>' : ''}
+                            ${data.lista.map(m => `
+                                <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center">
+                                    <div class="flex-1">
+                                        <p class="text-xs font-bold text-white mb-0.5">${m.cat} <span class="opacity-50 font-normal">| ${m.metodo}</span></p>
+                                        <p class="text-[10px] text-slate-400 italic">${m.desc || 'Sin nota'} • ${m.fecha.slice(11,16)}</p>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <p class="text-sm font-extrabold ${m.tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'}">$${parseFloat(m.monto).toLocaleString()}</p>
+                                        <button onclick="editarMovimiento(${m.index})" class="text-[9px] gold-text font-bold uppercase mt-1">Editar / Notas</button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>`;
@@ -216,7 +231,7 @@
                             <div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Nueva Cuenta</p>
                                 <div class="flex gap-2">
-                                    <input type="text" id="newCta" placeholder="Ej: BBVA" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
+                                    <input type="text" id="newCta" placeholder="Nombre (ej. BBVA)" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
                                     <select id="ctaTipo" class="p-3 bg-slate-100 rounded-lg text-xs font-bold text-slate-900 outline-none">
                                         <option value="debito">Débito</option>
                                         <option value="credito">Crédito</option>
@@ -320,6 +335,19 @@
             save(); render();
         }
 
+        function editarMovimiento(index) {
+            const mov = movimientos[index];
+            const nuevoMonto = prompt("Editar Monto:", mov.monto);
+            const nuevaDesc = prompt("Editar Nota/Descripción:", mov.desc || "");
+            
+            if (nuevoMonto !== null && nuevaDesc !== null) {
+                movimientos[index].monto = nuevoMonto;
+                movimientos[index].desc = nuevaDesc;
+                save();
+                render();
+            }
+        }
+
         function calcularGlobal() {
             let total = 0, porMetodo = {};
             movimientos.forEach(mov => {
@@ -340,12 +368,12 @@
         }
 
         function calcularCorte(periodo, fechaRef) {
-            let i = 0, g = 0; 
+            let i = 0, g = 0, lista = []; 
             const refStr = fechaRef.slice(0, 10); 
             const refMesStr = fechaRef.slice(0, 7);
             const refDate = new Date(fechaRef);
 
-            movimientos.forEach(m => {
+            movimientos.forEach((m, index) => {
                 const movStr = m.fecha.slice(0, 10);
                 const movMesStr = m.fecha.slice(0, 7);
                 const movDate = new Date(m.fecha);
@@ -355,28 +383,19 @@
                 else if(periodo === 'mes') match = movMesStr === refMesStr;
                 else if(periodo === 'semana') match = Math.abs(refDate - movDate) / 864e5 <= 7;
 
-                if(match) { if(m.tipo==='ingreso') i+=parseFloat(m.monto); else g+=parseFloat(m.monto); }
+                if(match) { 
+                    if(m.tipo==='ingreso') i+=parseFloat(m.monto); else g+=parseFloat(m.monto); 
+                    lista.push({...m, index}); // Guardamos el índice original para poder editar
+                }
             });
-            return { ingresos: i, gastos: g, neto: i - g };
+            return { ingresos: i, gastos: g, neto: i - g, lista };
         }
 
         function save() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
         function cambiarVista(v) { vistaActual = v; render(); }
         function addItemMetodo() { const n = document.getElementById('newCta').value, t = document.getElementById('ctaTipo').value; if(n){ config.metodos.push({nombre:n, tipo:t}); save(); render(); } }
-        
-        function addRecurrente() { 
-            const n = document.getElementById('recNom').value;
-            const m = document.getElementById('recMon').value;
-            const c = document.getElementById('recCta').value;
-            const d = document.getElementById('recDia').value;
-            if(n && m && d){ config.recurrentes.push({nombre:n, monto:m, cuenta:c, dia:d}); save(); render(); } 
-        }
-        
-        function addItem(key, id) { 
-            const v = document.getElementById(id).value; 
-            if(v){ config[key].push(v); save(); render(); } 
-        }
-        
+        function addRecurrente() { const n = document.getElementById('recNom').value, m = document.getElementById('recMon').value, c = document.getElementById('recCta').value, d = document.getElementById('recDia').value; if(n && m && d){ config.recurrentes.push({nombre:n, monto:m, cuenta:c, dia:d}); save(); render(); } }
+        function addItem(key, id) { const v = document.getElementById(id).value; if(v){ config[key].push(v); save(); render(); } }
         function removeItem(key, i) { config[key].splice(i, 1); save(); render(); }
         function agregarMeta(tipo) { const n = document.getElementById('meta_nombre').value, m = document.getElementById('meta_monto').value, f = document.getElementById('meta_fecha').value; if(n && m && f) { config.metas.push({nombre:n, monto:m, fecha:f, tipo:tipo}); save(); vistaActual='home'; render(); } }
         function borrarMeta(i) { config.metas.splice(i,1); save(); render(); }
