@@ -62,8 +62,13 @@
         let movimientos = JSON.parse(localStorage.getItem('e360_movs')) || [];
         let vistaActual = 'home';
         let tipoActual = 'gasto';
-        let subVistaCorte = 'mes';
-        let fechaFiltroCorte = new Date().toISOString().split('T')[0];
+        let subVistaCorte = 'semana'; // Default a semana para ver el cambio
+        let fechaFiltroCorte = new Date().toISOString().slice(0, 10);
+
+        // Ajuste de zona horaria para fecha inicial
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        fechaFiltroCorte = now.toISOString().slice(0, 10);
 
         function render() {
             const container = document.getElementById('app');
@@ -132,9 +137,9 @@
                     </div>
                 </div>`;
             
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('fecha_mov').value = now.toISOString().slice(0, 16);
+            const n = new Date();
+            n.setMinutes(n.getMinutes() - n.getTimezoneOffset());
+            document.getElementById('fecha_mov').value = n.toISOString().slice(0, 16);
         }
 
         function renderCorte(c) {
@@ -148,11 +153,13 @@
                         <button onclick="subVistaCorte='mes'; render();" class="pb-3 text-xs font-bold uppercase ${subVistaCorte === 'mes' ? 'tab-active' : 'opacity-40'}">Mes</button>
                     </div>
 
-                    <div class="mb-8">
-                        <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Seleccionar Fecha</label>
+                    <div class="mb-2">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Seleccionar Referencia</label>
                         <input type="${subVistaCorte==='mes'?'month':'date'}" value="${fechaFiltroCorte.slice(0, subVistaCorte==='mes'?7:10)}" 
-                               onchange="fechaFiltroCorte=this.value; render();" class="w-full bg-white/5 p-4 rounded-xl mt-1 text-sm outline-none border border-white/10">
+                               onchange="fechaFiltroCorte=this.value; render();" class="w-full bg-white/5 p-4 rounded-xl mt-1 text-sm outline-none border border-white/10 text-center font-bold">
                     </div>
+                    
+                    <p class="text-center text-[10px] gold-text font-bold mb-8 uppercase tracking-widest">${data.rangoTexto}</p>
 
                     <div class="space-y-6 mb-8 text-center">
                         <div class="card-white">
@@ -173,11 +180,14 @@
                                 <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center">
                                     <div class="flex-1">
                                         <p class="text-xs font-bold text-white mb-0.5">${m.cat} <span class="opacity-50 font-normal">| ${m.metodo}</span></p>
-                                        <p class="text-[10px] text-slate-400 italic">${m.desc || 'Sin nota'} • ${m.fecha.slice(11,16)}</p>
+                                        <p class="text-[10px] text-slate-400 italic">${m.desc || 'Sin nota'} • ${m.fecha.slice(0,10)}</p>
                                     </div>
-                                    <div class="text-right ml-4">
+                                    <div class="text-right ml-4 flex flex-col items-end">
                                         <p class="text-sm font-extrabold ${m.tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'}">$${parseFloat(m.monto).toLocaleString()}</p>
-                                        <button onclick="editarMovimiento(${m.index})" class="text-[9px] gold-text font-bold uppercase mt-1">Editar / Notas</button>
+                                        <div class="flex gap-3 mt-2">
+                                            <button onclick="editarMovimiento(${m.index})" class="text-[9px] gold-text font-bold uppercase">Editar</button>
+                                            <button onclick="eliminarMovimiento(${m.index})" class="text-[9px] text-red-500 font-bold uppercase">Eliminar</button>
+                                        </div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -348,6 +358,14 @@
             }
         }
 
+        function eliminarMovimiento(index) {
+            if(confirm("¿Seguro que quieres eliminar este registro?")) {
+                movimientos.splice(index, 1); 
+                save();
+                render();
+            }
+        }
+
         function calcularGlobal() {
             let total = 0, porMetodo = {};
             movimientos.forEach(mov => {
@@ -369,26 +387,47 @@
 
         function calcularCorte(periodo, fechaRef) {
             let i = 0, g = 0, lista = []; 
-            const refStr = fechaRef.slice(0, 10); 
-            const refMesStr = fechaRef.slice(0, 7);
-            const refDate = new Date(fechaRef);
+            
+            // Calculo de Rangos Estricto
+            let fechaInicio, fechaFin, rangoTexto;
+            const refDate = new Date(fechaRef + "T00:00:00"); // Forzar local time start
 
-            movimientos.forEach((m, index) => {
-                const movStr = m.fecha.slice(0, 10);
-                const movMesStr = m.fecha.slice(0, 7);
+            if (periodo === 'dia') {
+                fechaInicio = new Date(refDate);
+                fechaFin = new Date(refDate);
+                // Final del día
+                fechaFin.setHours(23, 59, 59, 999);
+                rangoTexto = `Día: ${fechaInicio.toLocaleDateString()}`;
+            } else if (periodo === 'semana') {
+                // Obtener Lunes (Si es Domingo=0, Lunes fue hace 6 dias)
+                const day = refDate.getDay();
+                const diff = refDate.getDate() - day + (day === 0 ? -6 : 1);
+                fechaInicio = new Date(refDate);
+                fechaInicio.setDate(diff);
+                fechaInicio.setHours(0,0,0,0);
+                
+                fechaFin = new Date(fechaInicio);
+                fechaFin.setDate(fechaInicio.getDate() + 6);
+                fechaFin.setHours(23,59,59,999);
+                rangoTexto = `Semana: ${fechaInicio.getDate()}/${fechaInicio.getMonth()+1} al ${fechaFin.getDate()}/${fechaFin.getMonth()+1}`;
+            } else { // Mes
+                fechaInicio = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+                fechaFin = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
+                fechaFin.setHours(23,59,59,999);
+                rangoTexto = `Mes: ${fechaInicio.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
+            }
+
+            movimientos.forEach((m, originalIndex) => {
                 const movDate = new Date(m.fecha);
-
-                let match = false;
-                if(periodo === 'dia') match = movStr === refStr;
-                else if(periodo === 'mes') match = movMesStr === refMesStr;
-                else if(periodo === 'semana') match = Math.abs(refDate - movDate) / 864e5 <= 7;
-
-                if(match) { 
+                
+                // Comparación estricta de tiempo
+                if (movDate >= fechaInicio && movDate <= fechaFin) { 
                     if(m.tipo==='ingreso') i+=parseFloat(m.monto); else g+=parseFloat(m.monto); 
-                    lista.push({...m, index}); // Guardamos el índice original para poder editar
+                    lista.push({...m, index: originalIndex}); 
                 }
             });
-            return { ingresos: i, gastos: g, neto: i - g, lista };
+            
+            return { ingresos: i, gastos: g, neto: i - g, lista, rangoTexto };
         }
 
         function save() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
