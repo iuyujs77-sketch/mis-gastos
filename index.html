@@ -22,44 +22,45 @@
         }
     </script>
     <style>
+        /* RESET GLOBAL */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body { background-color: #050b14; color: #e2e8f0; overscroll-behavior-y: none; }
         
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .glass-high { background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .glass-nav { background: rgba(5, 11, 20, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
         
-        /* FIX CRÍTICO PARA IOS Y DESBORDAMIENTO */
+        /* Inputs Modernos */
         .input-box { 
             background: rgba(255,255,255,0.03); 
             border: 1px solid rgba(255,255,255,0.1); 
             border-radius: 12px; 
-            padding: 12px 14px; 
+            padding: 14px 16px; 
             width: 100%; 
+            max-width: 100%; 
             color: white; 
             outline: none; 
             transition: 0.3s;
             font-size: 14px; 
             display: block;
-            /* Nuevas propiedades para contener el ancho */
-            max-width: 100%; 
-            min-width: 0;
+            min-width: 0; /* Previene desbordamiento */
         }
         .input-box:focus { border-color: rgba(212, 175, 55, 0.5); background: rgba(255,255,255,0.05); }
-
-        /* ESTILOS ESPECÍFICOS PARA FECHAS EN IOS */
-        .input-date-fix {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 100%;
-            background-color: transparent;
-            color-scheme: dark;
-            padding: 0; /* El padding lo da el contenedor padre si es necesario */
-        }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .animate-up { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Controles de fecha */
+        input[type="date"], input[type="month"], input[type="datetime-local"] { 
+            color-scheme: dark; 
+            width: 100%;
+            min-width: 0;
+            appearance: none;
+            -webkit-appearance: none; /* Fix para iOS */
+            padding-right: 10px;
+        }
         
         .nav-active { color: #d4af37; opacity: 1; transform: scale(1.1); text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
         .nav-inactive { color: #64748b; opacity: 0.7; }
@@ -206,9 +207,7 @@
 
                         <div class="mb-4">
                             <label class="text-[9px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Fecha y Hora</label>
-                            <div class="input-box bg-deep w-full overflow-hidden flex items-center">
-                                <input type="datetime-local" id="fecha_mov" class="input-date-fix bg-transparent text-white outline-none w-full">
-                            </div>
+                            <input type="datetime-local" id="fecha_mov" class="input-box bg-deep text-sm w-full">
                         </div>
                         
                         <div class="mb-6">
@@ -241,9 +240,9 @@
 
                     <div class="mb-2 w-full">
                         <label class="text-[9px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Periodo de Análisis</label>
-                        <div class="input-box bg-deep w-full overflow-hidden flex justify-center">
+                        <div class="w-full">
                             <input type="${subVistaCorte==='mes'?'month':'date'}" value="${fechaFiltroCorte.slice(0, subVistaCorte==='mes'?7:10)}" 
-                                   onchange="fechaFiltroCorte=this.value; render();" class="input-date-fix bg-transparent text-white text-center font-bold text-lg outline-none w-full">
+                                   onchange="fechaFiltroCorte=this.value; render();" class="input-box bg-deep text-center font-bold text-lg border-white/10 w-full">
                         </div>
                     </div>
                     
@@ -297,9 +296,7 @@
                                 <input type="number" id="meta_monto" placeholder="Monto $" class="input-box bg-deep">
                                 <div>
                                     <label class="text-[9px] font-bold text-gold uppercase ml-1 block mb-1">Fecha Límite</label>
-                                    <div class="input-box bg-deep w-full overflow-hidden flex items-center">
-                                        <input type="date" id="meta_fecha" class="input-date-fix bg-transparent text-white outline-none w-full">
-                                    </div>
+                                    <input type="date" id="meta_fecha" class="input-box bg-deep text-xs w-full">
                                 </div>
                             </div>
                             <div class="flex gap-3 pt-2">
@@ -331,7 +328,7 @@
                 </div>`;
         }
 
-        // --- LÓGICA (INTACTA) ---
+        // --- LÓGICA ---
         function updateNombre(v) { config.nombre = v; save(); render(); }
         function registrar() {
             const m = document.getElementById('monto').value; const fecha = document.getElementById('fecha_mov').value;
