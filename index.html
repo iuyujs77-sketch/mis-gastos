@@ -4,19 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0b141e">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Finance Élite 360</title>
+    <title>Finance Élite 360 - Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0b141e; color: #fff; overscroll-behavior-y: none; }
-        .dark-bg { background-color: #0b141e; }
-        .gold-text { color: #d4af37; }
-        .gold-bg { background: #d4af37; }
         .card-white { background-color: #ffffff; border-radius: 20px; padding: 18px; color: #1a202c; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .card-dark { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 25px; padding: 18px; }
-        .input-premium { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 0; width: 100%; outline: none; color: #fff; font-size: 16px; } /* 16px evita zoom en iOS */
+        .input-premium { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 0; width: 100%; outline: none; color: #fff; font-size: 16px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .animate-up { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -24,8 +19,7 @@
         .tab-active { border-bottom: 2px solid #d4af37; color: #d4af37; }
         select option { background-color: #0b141e; color: white; }
         input[type="date"], input[type="month"], input[type="datetime-local"] { color-scheme: dark; width: 100%; }
-        /* Fix para inputs que se salen */
-        .input-box-fix { box-sizing: border-box; width: 100%; }
+        .input-fix { width: 100%; box-sizing: border-box; min-width: 0; }
     </style>
 </head>
 <body class="pb-32">
@@ -55,9 +49,9 @@
         let config = JSON.parse(localStorage.getItem('e360_config')) || {
             nombre: "Usuario",
             metodos: [
-                { nombre: 'Efectivo', tipo: 'debito' },
-                { nombre: 'Amex', tipo: 'credito' },
-                { nombre: 'BBVA Débito', tipo: 'debito' }
+                { nombre: 'Efectivo', tipo: 'debito', inicial: 0 },
+                { nombre: 'Amex', tipo: 'credito', inicial: 0 },
+                { nombre: 'BBVA Débito', tipo: 'debito', inicial: 0 }
             ],
             categorias: ['Comida', 'Súper', 'Gasolina', 'Gym'],
             conceptosIngreso: ['Nómina', 'Bono'],
@@ -69,7 +63,6 @@
         let tipoActual = 'gasto';
         let subVistaCorte = 'semana'; 
         
-        // Ajuste de zona horaria para fecha inicial
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         let fechaFiltroCorte = now.toISOString().slice(0, 10);
@@ -90,7 +83,7 @@
                         <div class="w-12 h-12 rounded-full border border-gold-text/50 flex items-center justify-center bg-slate-800 font-bold gold-text text-xl shadow-lg">F</div>
                         <p class="text-[10px] font-bold gold-text uppercase">Finance Élite • ${config.nombre}</p>
                     </div>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Balance General</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Patrimonio Neto (Real)</p>
                     <h2 class="text-5xl font-extrabold text-white tracking-tighter mb-4">$${stats.totalBalance.toLocaleString()}</h2>
                 </div>
 
@@ -102,16 +95,27 @@
 
                     <div class="overflow-x-auto no-scrollbar flex gap-4 pb-2">
                         ${config.metodos.map(m => {
-                            const bal = stats.porMetodo[m.nombre] || 0;
+                            const data = stats.detalles[m.nombre] || { bal: m.inicial || 0, in: 0, out: 0 };
                             const isCred = m.tipo === 'credito';
-                            return `<div class="min-w-[155px] card-white flex flex-col justify-between h-36">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center text-[10px] text-white font-bold">${isCred ? '💳' : '💵'}</div>
-                                    <span class="text-[10px] font-extrabold text-slate-800 uppercase truncate">${m.nombre}</span>
+                            return `<div class="min-w-[165px] card-white flex flex-col justify-between h-40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-extrabold text-slate-800 uppercase truncate max-w-[80%]">${m.nombre}</span>
+                                    <div class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center text-[10px] text-white font-bold">${isCred ? '💳' : '💵'}</div>
                                 </div>
                                 <div>
-                                    <p class="text-[7px] text-slate-400 font-bold mb-1 uppercase">${isCred ? 'Deuda' : 'Disponible'}</p>
-                                    <p class="text-lg font-extrabold ${isCred && bal > 0 ? 'text-red-600' : 'text-slate-900'} leading-none">$${Math.abs(bal).toLocaleString()}</p>
+                                    <p class="text-[7px] text-slate-400 font-bold mb-1 uppercase">${isCred ? 'Deuda Total' : 'Disponible'}</p>
+                                    <p class="text-xl font-extrabold ${isCred && data.bal > 0 ? 'text-red-600' : 'text-slate-900'} leading-none mb-3">$${Math.abs(data.bal).toLocaleString()}</p>
+                                    
+                                    <div class="flex justify-between border-t border-slate-100 pt-2">
+                                        <div class="text-center">
+                                            <p class="text-[6px] text-slate-400 font-bold uppercase">Entradas</p>
+                                            <p class="text-[9px] font-bold text-green-600">+$${data.in.toLocaleString()}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-[6px] text-slate-400 font-bold uppercase">Salidas</p>
+                                            <p class="text-[9px] font-bold text-red-500">-$${data.out.toLocaleString()}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>`;
                         }).join('')}
@@ -157,10 +161,12 @@
                         <button onclick="subVistaCorte='mes'; render();" class="pb-3 text-xs font-bold uppercase ${subVistaCorte === 'mes' ? 'tab-active' : 'opacity-40'}">Mes</button>
                     </div>
 
-                    <div class="mb-2">
+                    <div class="mb-2 w-full">
                         <label class="text-[9px] font-bold text-slate-500 uppercase ml-2">Seleccionar Referencia</label>
-                        <input type="${subVistaCorte==='mes'?'month':'date'}" value="${fechaFiltroCorte.slice(0, subVistaCorte==='mes'?7:10)}" 
-                               onchange="fechaFiltroCorte=this.value; render();" class="input-box-fix w-full bg-white/5 p-3 rounded-xl mt-1 text-sm outline-none border border-white/10 text-center font-bold">
+                        <div class="w-full pr-2">
+                            <input type="${subVistaCorte==='mes'?'month':'date'}" value="${fechaFiltroCorte.slice(0, subVistaCorte==='mes'?7:10)}" 
+                                   onchange="fechaFiltroCorte=this.value; render();" class="input-fix bg-white/5 p-3 rounded-xl mt-1 text-sm outline-none border border-white/10 text-center font-bold">
+                        </div>
                     </div>
                     
                     <p class="text-center text-[10px] gold-text font-bold mb-8 uppercase tracking-widest">${data.rangoTexto}</p>
@@ -209,7 +215,9 @@
                         <input type="number" id="meta_monto" placeholder="Monto objetivo $" class="w-full p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 border text-sm">
                         <div>
                             <label class="text-[9px] font-bold text-slate-400 uppercase ml-2">Fecha límite</label>
-                            <input type="date" id="meta_fecha" class="input-box-fix w-full p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 mt-1 border text-sm">
+                            <div class="w-full pr-1">
+                                <input type="date" id="meta_fecha" class="input-fix p-3 bg-slate-50 rounded-xl font-bold outline-none text-slate-900 mt-1 border text-sm">
+                            </div>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="agregarMeta('ahorro')" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold uppercase text-[9px]">Ahorro ✈️</button>
@@ -243,18 +251,34 @@
                         <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-2 tracking-widest">Cartera</h3>
                         <div class="card-white space-y-4">
                             <div>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Nueva Cuenta</p>
-                                <div class="flex gap-2">
-                                    <input type="text" id="newCta" placeholder="Ej: BBVA" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Nueva Cuenta / Tarjeta</p>
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <input type="text" id="newCta" placeholder="Nombre (ej. BBVA)" class="p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
                                     <select id="ctaTipo" class="p-3 bg-slate-100 rounded-lg text-xs font-bold text-slate-900 outline-none">
                                         <option value="debito">Débito</option>
                                         <option value="credito">Crédito</option>
                                     </select>
-                                    <button onclick="addItemMetodo()" class="gold-bg px-4 rounded-lg font-bold text-slate-900">+</button>
                                 </div>
+                                <div class="flex gap-2">
+                                    <input type="number" id="ctaInicial" placeholder="Saldo/Deuda Inicial $" class="flex-1 p-3 bg-slate-100 rounded-lg text-sm font-bold text-slate-900 outline-none">
+                                    <button onclick="addItemMetodo()" class="gold-bg px-6 rounded-lg font-bold text-slate-900 uppercase text-xs">Crear</button>
+                                </div>
+                                <p class="text-[8px] text-slate-400 mt-1 italic">* Ajusta el total sin afectar reporte mensual.</p>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                ${config.metodos.map((m, i) => `<span class="bg-slate-100 p-2 rounded-lg text-[9px] font-bold border border-slate-200 text-slate-800">${m.nombre} <span class="text-[8px] text-slate-400 ml-1">(${m.tipo === 'credito' ? 'CR' : 'DB'})</span> <button onclick="removeItem('metodos',${i})" class="text-red-500 ml-1 font-bold">×</button></span>`).join('')}
+                            
+                            <div class="space-y-2 pt-2 border-t border-slate-100">
+                                ${config.metodos.map((m, i) => `
+                                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-800">${m.nombre} <span class="text-slate-400">(${m.tipo === 'credito' ? 'CR' : 'DB'})</span></p>
+                                            <p class="text-[9px] text-slate-500">Inicial: $${parseFloat(m.inicial || 0).toLocaleString()}</p>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="editarCuenta(${i})" class="text-blue-500 font-bold text-[10px] uppercase">Editar</button>
+                                            <button onclick="removeItem('metodos',${i})" class="text-red-500 font-bold text-[10px] uppercase">Eliminar</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     </div>
@@ -370,29 +394,64 @@
             }
         }
 
+        function editarCuenta(i) {
+            const m = config.metodos[i];
+            const nuevoNombre = prompt("Nombre de la cuenta:", m.nombre);
+            const nuevoInicial = prompt("Saldo/Deuda Inicial (ej. 5000):", m.inicial);
+            
+            if (nuevoNombre !== null && nuevoInicial !== null) {
+                config.metodos[i].nombre = nuevoNombre;
+                config.metodos[i].inicial = parseFloat(nuevoInicial);
+                save();
+                render();
+            }
+        }
+
         function calcularGlobal() {
-            let total = 0, porMetodo = {};
+            let total = 0, detalles = {};
+            
+            config.metodos.forEach(m => {
+                detalles[m.nombre] = { 
+                    bal: m.inicial ? parseFloat(m.inicial) : 0, 
+                    in: 0, 
+                    out: 0 
+                };
+                if (m.tipo === 'debito') {
+                    total += detalles[m.nombre].bal;
+                }
+            });
+
             movimientos.forEach(mov => {
                 const cta = config.metodos.find(x => x.nombre === mov.metodo);
                 if(!cta) return;
                 const monto = parseFloat(mov.monto);
-                if(!porMetodo[mov.metodo]) porMetodo[mov.metodo] = 0;
                 
+                if (!detalles[mov.metodo]) return;
+
                 if(mov.tipo === 'ingreso') {
-                    if(cta.tipo === 'debito') { total += monto; porMetodo[mov.metodo] += monto; }
-                    else porMetodo[mov.metodo] -= monto;
+                    detalles[mov.metodo].in += monto;
+                    if(cta.tipo === 'debito') { 
+                        total += monto; 
+                        detalles[mov.metodo].bal += monto; 
+                    } else {
+                        detalles[mov.metodo].bal -= monto; 
+                    }
                 } else {
-                    if(cta.tipo === 'debito') { total -= monto; porMetodo[mov.metodo] -= monto; }
-                    else porMetodo[mov.metodo] += monto;
+                    detalles[mov.metodo].out += monto;
+                    if(cta.tipo === 'debito') { 
+                        total -= monto; 
+                        detalles[mov.metodo].bal -= monto; 
+                    } else {
+                        detalles[mov.metodo].bal += monto; 
+                    }
                 }
             });
-            return { totalBalance: total, porMetodo };
+            
+            return { totalBalance: total, porMetodo: detalles, detalles };
         }
 
         function calcularCorte(periodo, fechaRef) {
             let i = 0, g = 0, lista = []; 
-            
-            // Calculo de Rangos Estricto (Lunes-Domingo / Mes Completo)
             let fechaInicio, fechaFin, rangoTexto;
             const refDate = new Date(fechaRef + "T00:00:00"); 
 
@@ -407,7 +466,6 @@
                 fechaInicio = new Date(refDate);
                 fechaInicio.setDate(diff);
                 fechaInicio.setHours(0,0,0,0);
-                
                 fechaFin = new Date(fechaInicio);
                 fechaFin.setDate(fechaInicio.getDate() + 6);
                 fechaFin.setHours(23,59,59,999);
@@ -431,7 +489,14 @@
 
         function save() { localStorage.setItem('e360_config', JSON.stringify(config)); localStorage.setItem('e360_movs', JSON.stringify(movimientos)); }
         function cambiarVista(v) { vistaActual = v; render(); }
-        function addItemMetodo() { const n = document.getElementById('newCta').value, t = document.getElementById('ctaTipo').value; if(n){ config.metodos.push({nombre:n, tipo:t}); save(); render(); } }
+        
+        function addItemMetodo() { 
+            const n = document.getElementById('newCta').value;
+            const t = document.getElementById('ctaTipo').value; 
+            const init = document.getElementById('ctaInicial').value;
+            if(n){ config.metodos.push({nombre:n, tipo:t, inicial: init || 0}); save(); render(); } 
+        }
+        
         function addRecurrente() { const n = document.getElementById('recNom').value, m = document.getElementById('recMon').value, c = document.getElementById('recCta').value, d = document.getElementById('recDia').value; if(n && m && d){ config.recurrentes.push({nombre:n, monto:m, cuenta:c, dia:d}); save(); render(); } }
         function addItem(key, id) { const v = document.getElementById(id).value; if(v){ config[key].push(v); save(); render(); } }
         function removeItem(key, i) { config[key].splice(i, 1); save(); render(); }
